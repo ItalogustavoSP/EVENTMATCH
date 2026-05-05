@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La Vie Casamentos</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -60,17 +61,14 @@
             cursor: pointer;
         }
 
-        .btn-logout:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
         }
 
-        .stats-grid {
+        /* Grids */
+        .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 1.5rem;
@@ -97,6 +95,222 @@
             color: #e11d48;
         }
 
+        .countdown-card {
+            background: linear-gradient(135deg, #e11d48, #9f1239);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            text-align: center;
+        }
+
+        .countdown-digits {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .countdown-digit {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            min-width: 60px;
+        }
+
+        .countdown-digit span {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Gráficos */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chart-card h3 {
+            margin-bottom: 1rem;
+            color: #0f172a;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        .full-width-chart {
+            grid-column: span 2;
+        }
+
+        /* Progresso */
+        .progress-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar-container {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #e11d48, #9f1239);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-size: 0.75rem;
+        }
+
+        /* Cards de Orçamento */
+        .budget-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .budget-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .budget-card.used {
+            border-left: 4px solid #e11d48;
+        }
+
+        .budget-card.available {
+            border-left: 4px solid #10b981;
+        }
+
+        .budget-card h3 {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .budget-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .budget-card.used .budget-value {
+            color: #e11d48;
+        }
+
+        .budget-card.available .budget-value {
+            color: #10b981;
+        }
+
+        .budget-percent {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+
+        .budget-percent.warning {
+            color: #f59e0b;
+        }
+
+        .budget-percent.danger {
+            color: #dc2626;
+        }
+
+        .budget-percent.success {
+            color: #10b981;
+        }
+
+        /* Calendário */
+        .calendar-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .calendar-nav button {
+            background: #f1f5f9;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+        }
+
+        .calendar-weekday {
+            text-align: center;
+            font-weight: bold;
+            padding: 0.5rem;
+            color: #64748b;
+        }
+
+        .calendar-day {
+            text-align: center;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+
+        .calendar-day:hover {
+            background: #f1f5f9;
+        }
+
+        .calendar-day.has-event {
+            background: #e11d48;
+            color: white;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #e11d48;
+        }
+
+        .event-indicator {
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Seções */
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -118,9 +332,6 @@
             background: #f1f5f9;
             color: #0f172a;
             border: 1px solid #e2e8f0;
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
         }
 
         .events-grid {
@@ -183,10 +394,6 @@
             max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
-        }
-
-        .modal-content h2 {
-            margin-bottom: 1rem;
         }
 
         .form-group {
@@ -309,8 +516,11 @@
         }
 
         @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .dashboard-grid, .charts-grid, .budget-cards {
+                grid-template-columns: 1fr;
+            }
+            .full-width-chart {
+                grid-column: span 1;
             }
             .container {
                 padding: 1rem;
@@ -323,7 +533,7 @@
 
     <script>
         // ============================================
-        // SISTEMA COMPLETO - SEM COROA NO ADMIN
+        // SISTEMA COMPLETO COM ORÇAMENTO DETALHADO
         // ============================================
         
         // Banco de dados local
@@ -331,9 +541,10 @@
         let globalEvents = JSON.parse(localStorage.getItem('globalEvents')) || [];
         let globalGuests = JSON.parse(localStorage.getItem('globalGuests')) || [];
         let globalSuppliers = JSON.parse(localStorage.getItem('globalSuppliers')) || [];
-        let nextIds = JSON.parse(localStorage.getItem('nextIds')) || { event: 1, guest: 1, supplier: 1 };
+        let globalExpenses = JSON.parse(localStorage.getItem('globalExpenses')) || [];
+        let nextIds = JSON.parse(localStorage.getItem('nextIds')) || { event: 1, guest: 1, supplier: 1, expense: 1 };
 
-        // Criar admin automaticamente se não existir
+        // Criar admin automaticamente
         if (!USUARIOS['admin']) {
             USUARIOS['admin'] = {
                 id: 1,
@@ -344,7 +555,6 @@
                 created_at: new Date().toISOString()
             };
             localStorage.setItem('usuarios', JSON.stringify(USUARIOS));
-            console.log('✅ Admin criado automaticamente!');
         }
 
         // Estado da aplicação
@@ -353,22 +563,29 @@
             events: [],
             guests: [],
             suppliers: [],
+            expenses: [],
             selectedEvent: null,
             showEventForm: false,
             showGuestForm: false,
             showSupplierForm: false,
+            showExpenseForm: false,
             editingEvent: null,
             editingGuest: null,
             editingSupplier: null,
-            authMode: 'login'
+            editingExpense: null,
+            authMode: 'login',
+            calendarYear: new Date().getFullYear(),
+            calendarMonth: new Date().getMonth(),
+            charts: {}
         };
 
-        // Salvar dados no localStorage
+        // Salvar dados
         function salvarDados() {
             localStorage.setItem('usuarios', JSON.stringify(USUARIOS));
             localStorage.setItem('globalEvents', JSON.stringify(globalEvents));
             localStorage.setItem('globalGuests', JSON.stringify(globalGuests));
             localStorage.setItem('globalSuppliers', JSON.stringify(globalSuppliers));
+            localStorage.setItem('globalExpenses', JSON.stringify(globalExpenses));
             localStorage.setItem('nextIds', JSON.stringify(nextIds));
         }
 
@@ -409,6 +626,7 @@
                 state.selectedEvent = null;
                 state.guests = [];
                 state.suppliers = [];
+                state.expenses = [];
                 return true;
             }
             return false;
@@ -420,6 +638,10 @@
             state.selectedEvent = null;
             state.guests = [];
             state.suppliers = [];
+            state.expenses = [];
+            Object.values(state.charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
             renderAuth();
         }
         
@@ -462,11 +684,13 @@
                 
                 globalGuests = globalGuests.filter(g => g.event_id !== id);
                 globalSuppliers = globalSuppliers.filter(s => s.event_id !== id);
+                globalExpenses = globalExpenses.filter(e => e.event_id !== id);
                 
                 if (state.selectedEvent === id) {
                     state.selectedEvent = null;
                     state.guests = [];
                     state.suppliers = [];
+                    state.expenses = [];
                 }
                 salvarDados();
                 return true;
@@ -523,7 +747,8 @@
         function createSupplier(supplierData) {
             const newSupplier = {
                 id: nextIds.supplier++,
-                ...supplierData
+                ...supplierData,
+                created_at: new Date().toISOString()
             };
             globalSuppliers.push(newSupplier);
             if (newSupplier.event_id === state.selectedEvent) {
@@ -571,17 +796,693 @@
         
         function formatDate(dateString) {
             if (!dateString) return 'Não definida';
-            return new Date(dateString).toLocaleDateString('pt-BR');
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
         }
         
         function loadEventData(eventId) {
             state.guests = globalGuests.filter(g => g.event_id === eventId);
             state.suppliers = globalSuppliers.filter(s => s.event_id === eventId);
+            state.expenses = globalExpenses.filter(e => e.event_id === eventId);
+        }
+        
+        function getDiasRestantes(eventDate) {
+            if (!eventDate) return null;
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const evento = new Date(eventDate);
+            evento.setHours(0, 0, 0, 0);
+            const diffTime = evento - hoje;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+        
+        function calcularProgresso(evento) {
+            if (!evento || !evento.budget_total || evento.budget_total === 0) return 0;
+            const suppliersTotal = state.suppliers.reduce((sum, s) => sum + (s.value || 0), 0);
+            const percentual = (suppliersTotal / evento.budget_total) * 100;
+            return Math.min(percentual, 100);
+        }
+        
+        function getTotalGasto() {
+            return state.suppliers.reduce((sum, s) => sum + (s.value || 0), 0);
+        }
+        
+        function getOrcamentoRestante(evento) {
+            if (!evento || !evento.budget_total) return 0;
+            const totalGasto = getTotalGasto();
+            return Math.max(0, evento.budget_total - totalGasto);
+        }
+        
+        function getPercentualUtilizado(evento) {
+            if (!evento || !evento.budget_total || evento.budget_total === 0) return 0;
+            const totalGasto = getTotalGasto();
+            const percentual = (totalGasto / evento.budget_total) * 100;
+            return Math.min(percentual, 100);
+        }
+        
+        function getStatusCorPercentual(percentual) {
+            if (percentual >= 90) return 'danger';
+            if (percentual >= 70) return 'warning';
+            return 'success';
+        }
+        
+        function getGastosPorCategoria() {
+            const categorias = {};
+            state.suppliers.forEach(supplier => {
+                const cat = supplier.category || 'Outros';
+                categorias[cat] = (categorias[cat] || 0) + (supplier.value || 0);
+            });
+            return categorias;
+        }
+        
+        function getStatusConvidados() {
+            const status = { confirmado: 0, pendente: 0, recusado: 0 };
+            state.guests.forEach(guest => {
+                if (guest.status === 'confirmado') status.confirmado++;
+                else if (guest.status === 'recusado') status.recusado++;
+                else status.pendente++;
+            });
+            return status;
+        }
+        
+        function getEvolucaoOrcamento() {
+            const meses = {};
+            const hoje = new Date();
+            
+            for (let i = 5; i >= 0; i--) {
+                const data = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+                const key = `${data.getMonth() + 1}/${data.getFullYear()}`;
+                meses[key] = 0;
+            }
+            
+            state.suppliers.forEach(supplier => {
+                if (supplier.created_at) {
+                    const date = new Date(supplier.created_at);
+                    const key = `${date.getMonth() + 1}/${date.getFullYear()}`;
+                    if (meses[key] !== undefined) {
+                        meses[key] += supplier.value || 0;
+                    }
+                }
+            });
+            
+            let acumulado = 0;
+            const labels = [];
+            const valores = [];
+            Object.entries(meses).forEach(([mes, valor]) => {
+                acumulado += valor;
+                labels.push(mes);
+                valores.push(acumulado);
+            });
+            
+            return { labels, valores };
+        }
+        
+        // ============================================
+        // GRÁFICOS
+        // ============================================
+        
+        function criarGraficoBarras() {
+            const ctx = document.getElementById('graficoBarras')?.getContext('2d');
+            if (!ctx) return;
+            if (state.charts.barras) state.charts.barras.destroy();
+            
+            const gastos = getGastosPorCategoria();
+            
+            state.charts.barras = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(gastos),
+                    datasets: [{
+                        label: 'Gastos por Categoria (R$)',
+                        data: Object.values(gastos),
+                        backgroundColor: '#e11d48',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.raw) } }
+                    }
+                }
+            });
+        }
+        
+        function criarGraficoPizza() {
+            const ctx = document.getElementById('graficoPizza')?.getContext('2d');
+            if (!ctx) return;
+            if (state.charts.pizza) state.charts.pizza.destroy();
+            
+            const status = getStatusConvidados();
+            const total = state.guests.length;
+            
+            state.charts.pizza = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [`Confirmados (${status.confirmado})`, `Pendentes (${status.pendente})`, `Recusados (${status.recusado})`],
+                    datasets: [{
+                        data: [status.confirmado, status.pendente, status.recusado],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: { callbacks: { label: (ctx) => `${ctx.raw} convidados (${((ctx.raw / total) * 100).toFixed(1)}%)` } }
+                    }
+                }
+            });
+        }
+        
+        function criarGraficoLinha() {
+            const ctx = document.getElementById('graficoLinha')?.getContext('2d');
+            if (!ctx) return;
+            if (state.charts.linha) state.charts.linha.destroy();
+            
+            const evolucao = getEvolucaoOrcamento();
+            
+            state.charts.linha = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: evolucao.labels,
+                    datasets: [{
+                        label: 'Evolução do Orçamento (R$)',
+                        data: evolucao.valores,
+                        borderColor: '#e11d48',
+                        backgroundColor: 'rgba(225, 29, 72, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: { callbacks: { label: (ctx) => formatCurrency(ctx.raw) } }
+                    }
+                }
+            });
+        }
+        
+        // ============================================
+        // CALENDÁRIO
+        // ============================================
+        
+        function renderizarCalendario() {
+            const primeiraSemana = new Date(state.calendarYear, state.calendarMonth, 1);
+            const ultimoDia = new Date(state.calendarYear, state.calendarMonth + 1, 0);
+            const diasNoMes = ultimoDia.getDate();
+            const primeiroDiaSemana = primeiraSemana.getDay();
+            const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+            let dias = [];
+            
+            for (let i = 0; i < primeiroDiaSemana; i++) dias.push(null);
+            
+            for (let i = 1; i <= diasNoMes; i++) {
+                const dataAtual = new Date(state.calendarYear, state.calendarMonth, i);
+                const temEvento = state.events.some(event => {
+                    const dataEvento = new Date(event.event_date);
+                    return dataEvento.toDateString() === dataAtual.toDateString();
+                });
+                const isToday = dataAtual.toDateString() === new Date().toDateString();
+                dias.push({ dia: i, temEvento, isToday, data: dataAtual });
+            }
+            
+            return `
+                <div class="calendar-section">
+                    <div class="calendar-header">
+                        <h3>📅 ${primeiraSemana.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3>
+                        <div class="calendar-nav">
+                            <button onclick="mudarMes(-1)">◀</button>
+                            <button onclick="mudarMes(1)">▶</button>
+                        </div>
+                    </div>
+                    <div class="calendar-grid">
+                        ${diasSemana.map(dia => `<div class="calendar-weekday">${dia.substring(0, 3)}</div>`).join('')}
+                        ${dias.map(dia => dia === null ? 
+                            '<div class="calendar-day"></div>' : 
+                            `<div class="calendar-day ${dia.temEvento ? 'has-event' : ''} ${dia.isToday ? 'today' : ''}" onclick="selecionarDataCalendario('${dia.data.toISOString()}')">
+                                ${dia.dia}
+                                ${dia.temEvento ? '<div class="event-indicator">🎉</div>' : ''}
+                            </div>`
+                        ).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function selecionarDataCalendario(dataISO) {
+            const dataSelecionada = new Date(dataISO);
+            const eventoNestaData = state.events.find(event => {
+                const dataEvento = new Date(event.event_date);
+                return dataEvento.toDateString() === dataSelecionada.toDateString();
+            });
+            
+            if (eventoNestaData) {
+                state.selectedEvent = eventoNestaData.id;
+                loadEventData(eventoNestaData.id);
+                renderDashboard();
+            } else {
+                alert(`Nenhum evento agendado para ${dataSelecionada.toLocaleDateString('pt-BR')}`);
+            }
         }
         
         // ============================================
         // RENDERIZAÇÃO
         // ============================================
+        
+        function renderizarGraficos() {
+            setTimeout(() => {
+                if (state.selectedEvent) {
+                    criarGraficoBarras();
+                    criarGraficoPizza();
+                    criarGraficoLinha();
+                }
+            }, 100);
+        }
+        
+        function renderDashboard() {
+            const app = document.getElementById('app');
+            const currentEvent = state.events.find(e => e.id === state.selectedEvent);
+            const eventGuests = state.guests;
+            const eventSuppliers = state.suppliers;
+            const diasRestantes = currentEvent ? getDiasRestantes(currentEvent.event_date) : null;
+            const progresso = currentEvent ? calcularProgresso(currentEvent) : 0;
+            const totalGasto = getTotalGasto();
+            const orcamentoRestante = currentEvent ? getOrcamentoRestante(currentEvent) : 0;
+            const percentualUtilizado = currentEvent ? getPercentualUtilizado(currentEvent) : 0;
+            const statusCor = getStatusCorPercentual(percentualUtilizado);
+            const statusConvidados = getStatusConvidados();
+            const totalConvidados = state.guests.length;
+            
+            let modalHtml = '';
+            if (state.showEventForm) modalHtml += renderEventForm();
+            if (state.showGuestForm) modalHtml += renderGuestForm();
+            if (state.showSupplierForm) modalHtml += renderSupplierForm();
+            
+            app.innerHTML = `
+                <div class="header">
+                    <div class="logo">💍 La Vie Casamentos</div>
+                    <div class="user-info">
+                        <div class="avatar">${state.user.username.charAt(0).toUpperCase()}</div>
+                        <span>${state.user.username}</span>
+                        <button class="btn-logout" onclick="logout()">Sair</button>
+                    </div>
+                </div>
+                
+                <div class="container">
+                    <!-- Cards de Estatísticas -->
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <h3>📅 Eventos</h3>
+                            <div class="stat-number">${state.events.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>👥 Convidados</h3>
+                            <div class="stat-number">${eventGuests.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>🏢 Fornecedores</h3>
+                            <div class="stat-number">${eventSuppliers.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>💰 Orçamento</h3>
+                            <div class="stat-number">${formatCurrency(currentEvent?.budget_total || 0)}</div>
+                        </div>
+                    </div>
+                    
+                    ${state.selectedEvent && currentEvent ? `
+                        <!-- Contagem Regressiva -->
+                        <div class="countdown-card">
+                            <h3>⏰ ${diasRestantes !== null ? (diasRestantes >= 0 ? `Faltam ${diasRestantes} dias para o grande dia!` : `Evento realizado há ${Math.abs(diasRestantes)} dias`) : ''}
+                                </h3>
+                            ${diasRestantes !== null && diasRestantes > 0 ? `
+                                <div class="countdown-digits">
+                                    <div class="countdown-digit"><span>${Math.floor(diasRestantes / 30)}</span><br>meses</div>
+                                    <div class="countdown-digit"><span>${Math.floor(diasRestantes % 30)}</span><br>dias</div>
+                                    <div class="countdown-digit"><span>${Math.floor(diasRestantes * 24)}</span><br>horas</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Cards de Orçamento Utilizado vs Disponível -->
+                        <div class="budget-cards">
+                            <div class="budget-card used">
+                                <h3>💰 Orçamento Utilizado</h3>
+                                <div class="budget-value">${formatCurrency(totalGasto)}</div>
+                                <div class="budget-percent ${statusCor}">
+                                    ${percentualUtilizado.toFixed(1)}% do total
+                                </div>
+                                <small>${eventSuppliers.length} fornecedores contratados</small>
+                            </div>
+                            <div class="budget-card available">
+                                <h3>💵 Orçamento Disponível</h3>
+                                <div class="budget-value">${formatCurrency(orcamentoRestante)}</div>
+                                <div class="budget-percent success">
+                                    ${(100 - percentualUtilizado).toFixed(1)}% restante
+                                </div>
+                                <small>Ainda disponível para gastar</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Barra de Progresso do Orçamento -->
+                        <div class="progress-section">
+                            <h3>📊 Orçamento: ${percentualUtilizado.toFixed(1)}% utilizado</h3>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" style="width: ${percentualUtilizado}%">${percentualUtilizado.toFixed(1)}%</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                                <span>✅ Já gasto: ${formatCurrency(totalGasto)}</span>
+                                <span>🎯 Meta: ${formatCurrency(currentEvent?.budget_total || 0)}</span>
+                                <span>💪 Disponível: ${formatCurrency(orcamentoRestante)}</span>
+                            </div>
+                            ${percentualUtilizado >= 90 ? `
+                                <div style="margin-top: 0.5rem; background: #fee2e2; border-radius: 8px; padding: 0.5rem; color: #dc2626;">
+                                    ⚠️ Atenção! Você já utilizou ${percentualUtilizado.toFixed(1)}% do orçamento. Revise seus gastos!
+                                </div>
+                            ` : percentualUtilizado >= 70 ? `
+                                <div style="margin-top: 0.5rem; background: #fef3c7; border-radius: 8px; padding: 0.5rem; color: #d97706;">
+                                    ⚠️ Cuidado! Você já utilizou ${percentualUtilizado.toFixed(1)}% do orçamento.
+                                </div>
+                            ` : ''}
+                            <div style="margin-top: 0.5rem; background: #f1f5f9; border-radius: 8px; padding: 0.5rem;">
+                                <small>✅ ${eventSuppliers.length} fornecedores • 👥 ${statusConvidados.confirmado} convidados confirmados de ${totalConvidados}</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Gráficos -->
+                        <div class="charts-grid">
+                            <div class="chart-card">
+                                <h3>📊 Gastos por Categoria</h3>
+                                <div class="chart-container">
+                                    <canvas id="graficoBarras"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card">
+                                <h3>🥧 Status dos Convidados</h3>
+                                <div class="chart-container">
+                                    <canvas id="graficoPizza"></canvas>
+                                </div>
+                            </div>
+                            <div class="chart-card full-width-chart">
+                                <h3>📈 Evolução do Orçamento</h3>
+                                <div class="chart-container" style="height: 300px;">
+                                    <canvas id="graficoLinha"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Calendário -->
+                    ${renderizarCalendario()}
+                    
+                    <!-- Seção de Eventos -->
+                    <div class="section-header">
+                        <h2>🎯 Meus Eventos</h2>
+                        <button class="btn" onclick="openEventModal()">+ Novo Evento</button>
+                    </div>
+                    
+                    ${state.events.length === 0 ? `
+                        <div class="empty-state">
+                            <p>Você ainda não tem nenhum evento cadastrado.</p>
+                            <button class="btn" onclick="openEventModal()" style="margin-top: 1rem;">Criar meu primeiro evento</button>
+                        </div>
+                    ` : `
+                        <div class="events-grid">
+                            ${state.events.map(event => {
+                                const gastosEvento = globalSuppliers.filter(s => s.event_id === event.id).reduce((sum, s) => sum + (s.value || 0), 0);
+                                const percGasto = event.budget_total ? (gastosEvento / event.budget_total) * 100 : 0;
+                                return `
+                                    <div class="event-card ${state.selectedEvent === event.id ? 'selected' : ''}" onclick="selectEvent(${event.id})">
+                                        <div class="event-card-header">
+                                            <h3>${event.name || event.couple_names || 'Evento'}</h3>
+                                        </div>
+                                        <div class="event-card-body">
+                                            <p><strong>Tipo:</strong> ${event.event_type}</p>
+                                            <p><strong>Orçamento:</strong> ${formatCurrency(event.budget_total)}</p>
+                                            <p><strong>Gasto:</strong> ${formatCurrency(gastosEvento)} (${percGasto.toFixed(1)}%)</p>
+                                            <p><strong>Data:</strong> ${formatDate(event.event_date)}</p>
+                                            <p><strong>Local:</strong> ${event.venue || 'Não definido'}</p>
+                                        </div>
+                                        <div style="padding: 0 1rem 1rem; display: flex; gap: 0.5rem;">
+                                            <button class="btn-secondary" style="flex:1; padding:0.5rem;" onclick="event.stopPropagation(); editEvent(${event.id})">✏️ Editar</button>
+                                            <button class="btn-secondary" style="flex:1; padding:0.5rem; background:#fee2e2;" onclick="event.stopPropagation(); deleteEventConfirm(${event.id})">🗑️ Excluir</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `}
+                    
+                    ${state.selectedEvent && currentEvent ? `
+                        <div>
+                            <div class="section-header" style="margin-top: 2rem;">
+                                <h2>🎉 Gerenciando: ${currentEvent.name || currentEvent.couple_names || 'Evento'}</h2>
+                                <button class="btn-secondary" onclick="selectEvent(null)">Trocar Evento</button>
+                            </div>
+                            
+                            <div class="section-header" style="margin-top: 2rem;">
+                                <h2>👥 Convidados</h2>
+                                <button class="btn" onclick="openGuestModal()">+ Adicionar Convidado</button>
+                            </div>
+                            
+                            ${eventGuests.length === 0 ? `
+                                <div class="empty-state">
+                                    <p>Nenhum convidado cadastrado.</p>
+                                    <button class="btn" onclick="openGuestModal()" style="margin-top: 0.5rem;">Adicionar primeiro convidado</button>
+                                </div>
+                            ` : `
+                                <div class="guest-list">
+                                    ${eventGuests.map(guest => `
+                                        <div class="guest-card">
+                                            <div>
+                                                <strong>${guest.name}</strong>
+                                                <div style="font-size:0.75rem; color:#64748b;">
+                                                    ${guest.group_name ? `👥 ${guest.group_name} • ` : ''}
+                                                    ${guest.table_name ? `Mesa: ${guest.table_name}` : ''}
+                                                </div>
+                                                <div style="font-size:0.75rem; color:#64748b;">
+                                                    ${guest.status === 'confirmado' ? '✅ Confirmado' : guest.status === 'recusado' ? '❌ Recusado' : '⏳ Pendente'}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <button class="btn-icon" onclick="editGuest(${guest.id})">✏️</button>
+                                                <button class="btn-icon" onclick="deleteGuestConfirm(${guest.id})">🗑️</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                            
+                            <div class="section-header" style="margin-top: 2rem;">
+                                <h2>🏢 Fornecedores</h2>
+                                <button class="btn" onclick="openSupplierModal()">+ Adicionar Fornecedor</button>
+                            </div>
+                            
+                            ${eventSuppliers.length === 0 ? `
+                                <div class="empty-state">
+                                    <p>Nenhum fornecedor cadastrado.</p>
+                                    <button class="btn" onclick="openSupplierModal()" style="margin-top: 0.5rem;">Adicionar primeiro fornecedor</button>
+                                </div>
+                            ` : `
+                                <div class="supplier-list">
+                                    ${eventSuppliers.map(supplier => `
+                                        <div class="supplier-card">
+                                            <div>
+                                                <strong>${supplier.name}</strong>
+                                                <div style="font-size:0.75rem; color:#64748b;">📂 ${supplier.category}</div>
+                                                <div style="font-size:0.75rem; color:#64748b;">💰 ${formatCurrency(supplier.value)}</div>
+                                                <div style="font-size:0.75rem; color:#64748b;">
+                                                    ${supplier.status === 'contratado' ? '✅ Contratado' : supplier.status === 'negociacao' ? '🤝 Negociação' : '📄 Cotado'}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <button class="btn-icon" onclick="editSupplier(${supplier.id})">✏️</button>
+                                                <button class="btn-icon" onclick="deleteSupplierConfirm(${supplier.id})">🗑️</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                        </div>
+                    ` : state.events.length > 0 ? `
+                        <div class="empty-state">
+                            <p>Clique em um evento acima para gerenciar convidados, fornecedores e ver gráficos.</p>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                ${modalHtml}
+            `;
+            
+            renderizarGraficos();
+            
+            if (state.showEventForm) {
+                document.getElementById('eventForm').addEventListener('submit', handleEventSubmit);
+            }
+            if (state.showGuestForm) {
+                document.getElementById('guestForm').addEventListener('submit', handleGuestSubmit);
+            }
+            if (state.showSupplierForm) {
+                document.getElementById('supplierForm').addEventListener('submit', handleSupplierSubmit);
+            }
+        }
+        
+        // ============================================
+        // FORMULÁRIOS
+        // ============================================
+        
+        function renderEventForm() {
+            const event = state.editingEvent;
+            return `
+                <div class="modal" id="eventModal">
+                    <div class="modal-content">
+                        <h2>${event ? 'Editar Evento' : 'Novo Evento'}</h2>
+                        <form id="eventForm">
+                            <div class="form-group">
+                                <label>Nome do Evento</label>
+                                <input type="text" name="name" value="${event?.name || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Nomes dos Noivos</label>
+                                <input type="text" name="couple_names" value="${event?.couple_names || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select name="event_type">
+                                    <option value="Casamento" ${event?.event_type === 'Casamento' ? 'selected' : ''}>Casamento</option>
+                                    <option value="Corporativo" ${event?.event_type === 'Corporativo' ? 'selected' : ''}>Corporativo</option>
+                                    <option value="Aniversário" ${event?.event_type === 'Aniversário' ? 'selected' : ''}>Aniversário</option>
+                                    <option value="Festa" ${event?.event_type === 'Festa' ? 'selected' : ''}>Festa</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tema</label>
+                                <select name="theme">
+                                    <option value="Clássico" ${event?.theme === 'Clássico' ? 'selected' : ''}>Clássico</option>
+                                    <option value="Moderno" ${event?.theme === 'Moderno' ? 'selected' : ''}>Moderno</option>
+                                    <option value="Rústico" ${event?.theme === 'Rústico' ? 'selected' : ''}>Rústico</option>
+                                    <option value="Luxo" ${event?.theme === 'Luxo' ? 'selected' : ''}>Luxo</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Orçamento Total (R$)</label>
+                                <input type="number" name="budget_total" value="${event?.budget_total || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input type="date" name="event_date" value="${event?.event_date || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Local</label>
+                                <input type="text" name="venue" value="${event?.venue || ''}">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn">Salvar</button>
+                                <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderGuestForm() {
+            const guest = state.editingGuest;
+            return `
+                <div class="modal" id="guestModal">
+                    <div class="modal-content">
+                        <h2>${guest ? 'Editar Convidado' : 'Novo Convidado'}</h2>
+                        <form id="guestForm">
+                            <div class="form-group">
+                                <label>Nome do Convidado *</label>
+                                <input type="text" name="name" value="${guest?.name || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Grupo/Família</label>
+                                <input type="text" name="group_name" value="${guest?.group_name || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status">
+                                    <option value="pendente" ${guest?.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                                    <option value="confirmado" ${guest?.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                                    <option value="recusado" ${guest?.status === 'recusado' ? 'selected' : ''}>Recusado</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Número da Mesa</label>
+                                <input type="text" name="table_name" value="${guest?.table_name || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Telefone</label>
+                                <input type="text" name="phone" value="${guest?.phone || ''}">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn">Salvar Convidado</button>
+                                <button type="button" class="btn btn-secondary" onclick="closeGuestModal()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderSupplierForm() {
+            const supplier = state.editingSupplier;
+            return `
+                <div class="modal" id="supplierModal">
+                    <div class="modal-content">
+                        <h2>${supplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</h2>
+                        <form id="supplierForm">
+                            <div class="form-group">
+                                <label>Nome do Fornecedor *</label>
+                                <input type="text" name="name" value="${supplier?.name || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria *</label>
+                                <select name="category" required>
+                                    <option value="">Selecione</option>
+                                    <option value="Buffet" ${supplier?.category === 'Buffet' ? 'selected' : ''}>Buffet</option>
+                                    <option value="Fotografia" ${supplier?.category === 'Fotografia' ? 'selected' : ''}>Fotografia</option>
+                                    <option value="Música" ${supplier?.category === 'Música' ? 'selected' : ''}>Música</option>
+                                    <option value="Decoração" ${supplier?.category === 'Decoração' ? 'selected' : ''}>Decoração</option>
+                                    <option value="Espaço" ${supplier?.category === 'Espaço' ? 'selected' : ''}>Espaço</option>
+                                    <option value="Vestuário" ${supplier?.category === 'Vestuário' ? 'selected' : ''}>Vestuário</option>
+                                    <option value="Outro" ${supplier?.category === 'Outro' ? 'selected' : ''}>Outro</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status">
+                                    <option value="cotado" ${supplier?.status === 'cotado' ? 'selected' : ''}>Cotado</option>
+                                    <option value="negociacao" ${supplier?.status === 'negociacao' ? 'selected' : ''}>Negociação</option>
+                                    <option value="contratado" ${supplier?.status === 'contratado' ? 'selected' : ''}>Contratado</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Valor (R$)</label>
+                                <input type="number" name="value" value="${supplier?.value || 0}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Contato</label>
+                                <input type="text" name="contact" value="${supplier?.contact || ''}">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn">Salvar Fornecedor</button>
+                                <button type="button" class="btn btn-secondary" onclick="closeSupplierModal()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
         
         function renderAuth() {
             const app = document.getElementById('app');
@@ -590,7 +1491,7 @@
             app.innerHTML = `
                 <div class="auth-container">
                     <div class="auth-box">
-                        <h1>La Vie Casamentos</h1>
+                        <h1>💍 La Vie Casamentos</h1>
                         
                         <div class="auth-tabs">
                             <button class="auth-tab ${isLogin ? 'active' : ''}" onclick="setAuthMode('login')">Login</button>
@@ -689,328 +1590,6 @@
             }
         }
         
-        function renderEventForm() {
-            const event = state.editingEvent;
-            return `
-                <div class="modal" id="eventModal">
-                    <div class="modal-content">
-                        <h2>${event ? 'Editar Evento' : 'Novo Evento'}</h2>
-                        <form id="eventForm">
-                            <div class="form-group">
-                                <label>Nome do Evento</label>
-                                <input type="text" name="name" value="${event?.name || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Nomes dos Noivos</label>
-                                <input type="text" name="couple_names" value="${event?.couple_names || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo</label>
-                                <select name="event_type">
-                                    <option value="Casamento" ${event?.event_type === 'Casamento' ? 'selected' : ''}>Casamento</option>
-                                    <option value="Corporativo" ${event?.event_type === 'Corporativo' ? 'selected' : ''}>Corporativo</option>
-                                    <option value="Aniversário" ${event?.event_type === 'Aniversário' ? 'selected' : ''}>Aniversário</option>
-                                    <option value="Festa" ${event?.event_type === 'Festa' ? 'selected' : ''}>Festa</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Tema</label>
-                                <select name="theme">
-                                    <option value="Clássico" ${event?.theme === 'Clássico' ? 'selected' : ''}>Clássico</option>
-                                    <option value="Moderno" ${event?.theme === 'Moderno' ? 'selected' : ''}>Moderno</option>
-                                    <option value="Rústico" ${event?.theme === 'Rústico' ? 'selected' : ''}>Rústico</option>
-                                    <option value="Luxo" ${event?.theme === 'Luxo' ? 'selected' : ''}>Luxo</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Orçamento Total (R$)</label>
-                                <input type="number" name="budget_total" value="${event?.budget_total || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Data</label>
-                                <input type="date" name="event_date" value="${event?.event_date || ''}">
-                            </div>
-                            <div class="form-group">
-                                <label>Local</label>
-                                <input type="text" name="venue" value="${event?.venue || ''}">
-                            </div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn">Salvar</button>
-                                <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancelar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderGuestForm() {
-            const guest = state.editingGuest;
-            return `
-                <div class="modal" id="guestModal">
-                    <div class="modal-content">
-                        <h2>${guest ? 'Editar Convidado' : 'Novo Convidado'}</h2>
-                        <form id="guestForm">
-                            <div class="form-group">
-                                <label>Nome do Convidado *</label>
-                                <input type="text" name="name" value="${guest?.name || ''}" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Grupo/Família</label>
-                                <input type="text" name="group_name" value="${guest?.group_name || ''}" placeholder="Ex: Família Silva">
-                            </div>
-                            <div class="form-group">
-                                <label>Status</label>
-                                <select name="status">
-                                    <option value="pendente" ${guest?.status === 'pendente' ? 'selected' : ''}>Pendente</option>
-                                    <option value="confirmado" ${guest?.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
-                                    <option value="recusado" ${guest?.status === 'recusado' ? 'selected' : ''}>Recusado</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Número da Mesa</label>
-                                <input type="text" name="table_name" value="${guest?.table_name || ''}" placeholder="Ex: Mesa 01">
-                            </div>
-                            <div class="form-group">
-                                <label>Telefone</label>
-                                <input type="text" name="phone" value="${guest?.phone || ''}" placeholder="(11) 99999-9999">
-                            </div>
-                            <div class="form-group">
-                                <label>Restrições Alimentares</label>
-                                <input type="text" name="dietary" value="${guest?.dietary || ''}" placeholder="Ex: Vegano, Alergia a frutos do mar">
-                            </div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn">Salvar Convidado</button>
-                                <button type="button" class="btn btn-secondary" onclick="closeGuestModal()">Cancelar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderSupplierForm() {
-            const supplier = state.editingSupplier;
-            return `
-                <div class="modal" id="supplierModal">
-                    <div class="modal-content">
-                        <h2>${supplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</h2>
-                        <form id="supplierForm">
-                            <div class="form-group">
-                                <label>Nome do Fornecedor *</label>
-                                <input type="text" name="name" value="${supplier?.name || ''}" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Categoria *</label>
-                                <select name="category" required>
-                                    <option value="">Selecione</option>
-                                    <option value="Buffet" ${supplier?.category === 'Buffet' ? 'selected' : ''}>Buffet</option>
-                                    <option value="Fotografia" ${supplier?.category === 'Fotografia' ? 'selected' : ''}>Fotografia</option>
-                                    <option value="Música" ${supplier?.category === 'Música' ? 'selected' : ''}>Música</option>
-                                    <option value="Decoração" ${supplier?.category === 'Decoração' ? 'selected' : ''}>Decoração</option>
-                                    <option value="Espaço" ${supplier?.category === 'Espaço' ? 'selected' : ''}>Espaço</option>
-                                    <option value="Vestuário" ${supplier?.category === 'Vestuário' ? 'selected' : ''}>Vestuário</option>
-                                    <option value="Outro" ${supplier?.category === 'Outro' ? 'selected' : ''}>Outro</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Status</label>
-                                <select name="status">
-                                    <option value="cotado" ${supplier?.status === 'cotado' ? 'selected' : ''}>Cotado</option>
-                                    <option value="negociacao" ${supplier?.status === 'negociacao' ? 'selected' : ''}>Negociação</option>
-                                    <option value="contratado" ${supplier?.status === 'contratado' ? 'selected' : ''}>Contratado</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Valor (R$)</label>
-                                <input type="number" name="value" value="${supplier?.value || 0}">
-                            </div>
-                            <div class="form-group">
-                                <label>Contato</label>
-                                <input type="text" name="contact" value="${supplier?.contact || ''}" placeholder="Telefone ou email">
-                            </div>
-                            <div class="form-group">
-                                <label>Nota (0-5)</label>
-                                <input type="number" name="score" step="0.1" min="0" max="5" value="${supplier?.score || 0}">
-                            </div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn">Salvar Fornecedor</button>
-                                <button type="button" class="btn btn-secondary" onclick="closeSupplierModal()">Cancelar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function renderDashboard() {
-            const app = document.getElementById('app');
-            const currentEvent = state.events.find(e => e.id === state.selectedEvent);
-            const eventGuests = state.guests;
-            const eventSuppliers = state.suppliers;
-            
-            let modalHtml = '';
-            if (state.showEventForm) modalHtml += renderEventForm();
-            if (state.showGuestForm) modalHtml += renderGuestForm();
-            if (state.showSupplierForm) modalHtml += renderSupplierForm();
-            
-            app.innerHTML = `
-                <div class="header">
-                    <div class="logo">La Vie Casamentos</div>
-                    <div class="user-info">
-                        <div class="avatar">${state.user.username.charAt(0).toUpperCase()}</div>
-                        <span>${state.user.username}</span>
-                        <button class="btn-logout" onclick="logout()">Sair</button>
-                    </div>
-                </div>
-                
-                <div class="container">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <h3>Eventos</h3>
-                            <div class="stat-number">${state.events.length}</div>
-                        </div>
-                        <div class="stat-card">
-                            <h3>Convidados</h3>
-                            <div class="stat-number">${eventGuests.length}</div>
-                        </div>
-                        <div class="stat-card">
-                            <h3>Fornecedores</h3>
-                            <div class="stat-number">${eventSuppliers.length}</div>
-                        </div>
-                        <div class="stat-card">
-                            <h3>Orçamento</h3>
-                            <div class="stat-number">${formatCurrency(currentEvent?.budget_total || 0)}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="section-header">
-                        <h2>Meus Eventos</h2>
-                        <button class="btn" onclick="openEventModal()">+ Novo Evento</button>
-                    </div>
-                    
-                    ${state.events.length === 0 ? `
-                        <div class="empty-state">
-                            <p>Você ainda não tem nenhum evento cadastrado.</p>
-                            <button class="btn" onclick="openEventModal()" style="margin-top: 1rem;">Criar meu primeiro evento</button>
-                        </div>
-                    ` : `
-                        <div class="events-grid">
-                            ${state.events.map(event => `
-                                <div class="event-card ${state.selectedEvent === event.id ? 'selected' : ''}" onclick="selectEvent(${event.id})">
-                                    <div class="event-card-header">
-                                        <h3>${event.name || event.couple_names || 'Evento'}</h3>
-                                    </div>
-                                    <div class="event-card-body">
-                                        <p><strong>Tipo:</strong> ${event.event_type}</p>
-                                        <p><strong>Tema:</strong> ${event.theme}</p>
-                                        <p><strong>Orçamento:</strong> ${formatCurrency(event.budget_total)}</p>
-                                        <p><strong>Data:</strong> ${formatDate(event.event_date)}</p>
-                                        <p><strong>Local:</strong> ${event.venue || 'Não definido'}</p>
-                                    </div>
-                                    <div style="padding: 0 1rem 1rem; display: flex; gap: 0.5rem;">
-                                        <button class="btn-secondary" style="flex:1; padding:0.5rem;" onclick="event.stopPropagation(); editEvent(${event.id})">✏️ Editar</button>
-                                        <button class="btn-secondary" style="flex:1; padding:0.5rem; background:#fee2e2;" onclick="event.stopPropagation(); deleteEventConfirm(${event.id})">🗑️ Excluir</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `}
-                    
-                    ${state.selectedEvent && currentEvent ? `
-                        <div>
-                            <div class="section-header" style="margin-top: 2rem;">
-                                <h2>🎉 Gerenciando: ${currentEvent.name || currentEvent.couple_names || 'Evento'}</h2>
-                                <button class="btn-secondary" onclick="selectEvent(null)">Trocar Evento</button>
-                            </div>
-                            
-                            <div class="section-header" style="margin-top: 2rem;">
-                                <h2>👥 Convidados</h2>
-                                <button class="btn" onclick="openGuestModal()">+ Adicionar Convidado</button>
-                            </div>
-                            
-                            ${eventGuests.length === 0 ? `
-                                <div class="empty-state">
-                                    <p>Nenhum convidado cadastrado.</p>
-                                    <button class="btn" onclick="openGuestModal()" style="margin-top: 0.5rem;">Adicionar primeiro convidado</button>
-                                </div>
-                            ` : `
-                                <div class="guest-list">
-                                    ${eventGuests.map(guest => `
-                                        <div class="guest-card">
-                                            <div>
-                                                <strong>${guest.name}</strong>
-                                                <div style="font-size:0.75rem; color:#64748b;">
-                                                    ${guest.group_name ? `👥 ${guest.group_name} • ` : ''}
-                                                    ${guest.table_name ? `Mesa: ${guest.table_name}` : ''}
-                                                </div>
-                                                <div style="font-size:0.75rem; color:#64748b;">
-                                                    ${guest.status === 'confirmado' ? '✅ Confirmado' : guest.status === 'recusado' ? '❌ Recusado' : '⏳ Pendente'}
-                                                    ${guest.phone ? ` • 📞 ${guest.phone}` : ''}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <button class="btn-icon" onclick="editGuest(${guest.id})" title="Editar">✏️</button>
-                                                <button class="btn-icon" onclick="deleteGuestConfirm(${guest.id})" title="Excluir">🗑️</button>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `}
-                            
-                            <div class="section-header" style="margin-top: 2rem;">
-                                <h2>🏢 Fornecedores</h2>
-                                <button class="btn" onclick="openSupplierModal()">+ Adicionar Fornecedor</button>
-                            </div>
-                            
-                            ${eventSuppliers.length === 0 ? `
-                                <div class="empty-state">
-                                    <p>Nenhum fornecedor cadastrado.</p>
-                                    <button class="btn" onclick="openSupplierModal()" style="margin-top: 0.5rem;">Adicionar primeiro fornecedor</button>
-                                </div>
-                            ` : `
-                                <div class="supplier-list">
-                                    ${eventSuppliers.map(supplier => `
-                                        <div class="supplier-card">
-                                            <div>
-                                                <strong>${supplier.name}</strong>
-                                                <div style="font-size:0.75rem; color:#64748b;">📂 ${supplier.category}</div>
-                                                <div style="font-size:0.75rem; color:#64748b;">💰 ${formatCurrency(supplier.value)}</div>
-                                                <div style="font-size:0.75rem; color:#64748b;">
-                                                    ${supplier.status === 'contratado' ? '✅ Contratado' : supplier.status === 'negociacao' ? '🤝 Negociação' : '📄 Cotado'}
-                                                    ${supplier.contact ? ` • 📞 ${supplier.contact}` : ''}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <button class="btn-icon" onclick="editSupplier(${supplier.id})" title="Editar">✏️</button>
-                                                <button class="btn-icon" onclick="deleteSupplierConfirm(${supplier.id})" title="Excluir">🗑️</button>
-                                            </div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `}
-                        </div>
-                    ` : state.events.length > 0 ? `
-                        <div class="empty-state">
-                            <p>Clique em um evento acima para gerenciar convidados e fornecedores.</p>
-                        </div>
-                    ` : ''}
-                </div>
-                
-                ${modalHtml}
-            `;
-            
-            if (state.showEventForm) {
-                document.getElementById('eventForm').addEventListener('submit', handleEventSubmit);
-            }
-            if (state.showGuestForm) {
-                document.getElementById('guestForm').addEventListener('submit', handleGuestSubmit);
-            }
-            if (state.showSupplierForm) {
-                document.getElementById('supplierForm').addEventListener('submit', handleSupplierSubmit);
-            }
-        }
-        
         // ============================================
         // HANDLERS
         // ============================================
@@ -1063,7 +1642,7 @@
             const data = Object.fromEntries(formData.entries());
             data.event_id = state.selectedEvent;
             data.value = parseFloat(data.value || 0);
-            data.score = parseFloat(data.score || 0);
+            data.created_at = new Date().toISOString();
             
             let success;
             if (state.editingSupplier) {
@@ -1094,6 +1673,15 @@
             loadEventData(eventId);
             renderDashboard();
         };
+        
+        window.mudarMes = (delta) => {
+            const novaData = new Date(state.calendarYear, state.calendarMonth + delta, 1);
+            state.calendarYear = novaData.getFullYear();
+            state.calendarMonth = novaData.getMonth();
+            renderDashboard();
+        };
+        
+        window.selecionarDataCalendario = selecionarDataCalendario;
         
         window.openEventModal = () => {
             state.editingEvent = null;
