@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Vie Casamentos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #e11d48, #9f1239);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #e11d48;
+            font-weight: bold;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .stat-card h3 {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e11d48;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 2rem 0 1rem;
+        }
+
+        .btn {
+            background: #e11d48;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #0f172a;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+
+        .events-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .event-card {
+            background: white;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .event-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .event-card.selected {
+            border: 2px solid #e11d48;
+        }
+
+        .event-card-header {
+            background: linear-gradient(135deg, #e11d48, #9f1239);
+            color: white;
+            padding: 1rem;
+        }
+
+        .event-card-body {
+            padding: 1rem;
+        }
+
+        .event-card-body p {
+            margin: 0.5rem 0;
+            color: #475569;
+            font-size: 0.875rem;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #e11d48, #9f1239);
+        }
+
+        .auth-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-box h1 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #e11d48;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .auth-tab.active {
+            color: #e11d48;
+            border-bottom: 2px solid #e11d48;
+            margin-bottom: -2px;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 1rem;
+            color: #64748b;
+        }
+
+        .guest-list, .supplier-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .guest-card, .supplier-card {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        // ============================================
+        // SISTEMA COMPLETO - SEM COROA NO ADMIN
+        // ============================================
+        
+        // Banco de dados local
+        let USUARIOS = JSON.parse(localStorage.getItem('usuarios')) || {};
+        let globalEvents = JSON.parse(localStorage.getItem('globalEvents')) || [];
+        let globalGuests = JSON.parse(localStorage.getItem('globalGuests')) || [];
+        let globalSuppliers = JSON.parse(localStorage.getItem('globalSuppliers')) || [];
+        let nextIds = JSON.parse(localStorage.getItem('nextIds')) || { event: 1, guest: 1, supplier: 1 };
+
+        // Criar admin automaticamente se não existir
+        if (!USUARIOS['admin']) {
+            USUARIOS['admin'] = {
+                id: 1,
+                username: 'admin',
+                password: 'admin123',
+                email: 'admin@lavie.com',
+                is_admin: true,
+                created_at: new Date().toISOString()
+            };
+            localStorage.setItem('usuarios', JSON.stringify(USUARIOS));
+            console.log('✅ Admin criado automaticamente!');
+        }
+
+        // Estado da aplicação
+        let state = {
+            user: null,
+            events: [],
+            guests: [],
+            suppliers: [],
+            selectedEvent: null,
+            showEventForm: false,
+            showGuestForm: false,
+            showSupplierForm: false,
+            editingEvent: null,
+            editingGuest: null,
+            editingSupplier: null,
+            authMode: 'login'
+        };
+
+        // Salvar dados no localStorage
+        function salvarDados() {
+            localStorage.setItem('usuarios', JSON.stringify(USUARIOS));
+            localStorage.setItem('globalEvents', JSON.stringify(globalEvents));
+            localStorage.setItem('globalGuests', JSON.stringify(globalGuests));
+            localStorage.setItem('globalSuppliers', JSON.stringify(globalSuppliers));
+            localStorage.setItem('nextIds', JSON.stringify(nextIds));
+        }
+
+        // ============================================
+        // FUNÇÕES DE AUTENTICAÇÃO
+        // ============================================
+        
+        function register(username, password, email) {
+            if (USUARIOS[username]) {
+                return { success: false, error: 'Usuário já existe!' };
+            }
+            
+            const emailExistente = Object.values(USUARIOS).some(u => u.email === email);
+            if (emailExistente) {
+                return { success: false, error: 'Email já cadastrado!' };
+            }
+            
+            const novoId = Object.keys(USUARIOS).length + 1;
+            USUARIOS[username] = {
+                id: novoId,
+                username: username,
+                password: password,
+                email: email,
+                is_admin: false,
+                created_at: new Date().toISOString()
+            };
+            
+            salvarDados();
+            return { success: true };
+        }
+        
+        function login(username, password) {
+            const user = USUARIOS[username];
+            
+            if (user && user.password === password) {
+                state.user = { ...user };
+                state.events = globalEvents.filter(e => e.user_id === user.id);
+                state.selectedEvent = null;
+                state.guests = [];
+                state.suppliers = [];
+                return true;
+            }
+            return false;
+        }
+        
+        function logout() {
+            state.user = null;
+            state.events = [];
+            state.selectedEvent = null;
+            state.guests = [];
+            state.suppliers = [];
+            renderAuth();
+        }
+        
+        // ============================================
+        // CRUD DE EVENTOS
+        // ============================================
+        
+        function createEvent(eventData) {
+            const newEvent = {
+                id: nextIds.event++,
+                user_id: state.user.id,
+                ...eventData,
+                created_at: new Date().toISOString()
+            };
+            globalEvents.push(newEvent);
+            state.events.push(newEvent);
+            salvarDados();
+            return true;
+        }
+        
+        function updateEvent(id, eventData) {
+            const index = globalEvents.findIndex(e => e.id === id);
+            if (index !== -1) {
+                globalEvents[index] = { ...globalEvents[index], ...eventData };
+                const userIndex = state.events.findIndex(e => e.id === id);
+                if (userIndex !== -1) {
+                    state.events[userIndex] = { ...state.events[userIndex], ...eventData };
+                }
+                salvarDados();
+                return true;
+            }
+            return false;
+        }
+        
+        function deleteEvent(id) {
+            const index = globalEvents.findIndex(e => e.id === id);
+            if (index !== -1) {
+                globalEvents.splice(index, 1);
+                state.events = state.events.filter(e => e.id !== id);
+                
+                globalGuests = globalGuests.filter(g => g.event_id !== id);
+                globalSuppliers = globalSuppliers.filter(s => s.event_id !== id);
+                
+                if (state.selectedEvent === id) {
+                    state.selectedEvent = null;
+                    state.guests = [];
+                    state.suppliers = [];
+                }
+                salvarDados();
+                return true;
+            }
+            return false;
+        }
+        
+        // ============================================
+        // CRUD DE CONVIDADOS
+        // ============================================
+        
+        function createGuest(guestData) {
+            const newGuest = {
+                id: nextIds.guest++,
+                ...guestData
+            };
+            globalGuests.push(newGuest);
+            if (newGuest.event_id === state.selectedEvent) {
+                state.guests.push(newGuest);
+            }
+            salvarDados();
+            return true;
+        }
+        
+        function updateGuest(id, guestData) {
+            const index = globalGuests.findIndex(g => g.id === id);
+            if (index !== -1) {
+                globalGuests[index] = { ...globalGuests[index], ...guestData };
+                const userIndex = state.guests.findIndex(g => g.id === id);
+                if (userIndex !== -1) {
+                    state.guests[userIndex] = { ...state.guests[userIndex], ...guestData };
+                }
+                salvarDados();
+                return true;
+            }
+            return false;
+        }
+        
+        function deleteGuest(id) {
+            const index = globalGuests.findIndex(g => g.id === id);
+            if (index !== -1) {
+                globalGuests.splice(index, 1);
+                state.guests = state.guests.filter(g => g.id !== id);
+                salvarDados();
+                return true;
+            }
+            return false;
+        }
+        
+        // ============================================
+        // CRUD DE FORNECEDORES
+        // ============================================
+        
+        function createSupplier(supplierData) {
+            const newSupplier = {
+                id: nextIds.supplier++,
+                ...supplierData
+            };
+            globalSuppliers.push(newSupplier);
+            if (newSupplier.event_id === state.selectedEvent) {
+                state.suppliers.push(newSupplier);
+            }
+            salvarDados();
+            return true;
+        }
+        
+        function updateSupplier(id, supplierData) {
+            const index = globalSuppliers.findIndex(s => s.id === id);
+            if (index !== -1) {
+                globalSuppliers[index] = { ...globalSuppliers[index], ...supplierData };
+                const userIndex = state.suppliers.findIndex(s => s.id === id);
+                if (userIndex !== -1) {
+                    state.suppliers[userIndex] = { ...state.suppliers[userIndex], ...supplierData };
+                }
+                salvarDados();
+                return true;
+            }
+            return false;
+        }
+        
+        function deleteSupplier(id) {
+            const index = globalSuppliers.findIndex(s => s.id === id);
+            if (index !== -1) {
+                globalSuppliers.splice(index, 1);
+                state.suppliers = state.suppliers.filter(s => s.id !== id);
+                salvarDados();
+                return true;
+            }
+            return false;
+        }
+        
+        // ============================================
+        // FUNÇÕES AUXILIARES
+        // ============================================
+        
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value || 0);
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'Não definida';
+            return new Date(dateString).toLocaleDateString('pt-BR');
+        }
+        
+        function loadEventData(eventId) {
+            state.guests = globalGuests.filter(g => g.event_id === eventId);
+            state.suppliers = globalSuppliers.filter(s => s.event_id === eventId);
+        }
+        
+        // ============================================
+        // RENDERIZAÇÃO
+        // ============================================
+        
+        function renderAuth() {
+            const app = document.getElementById('app');
+            const isLogin = state.authMode === 'login';
+            
+            app.innerHTML = `
+                <div class="auth-container">
+                    <div class="auth-box">
+                        <h1>La Vie Casamentos</h1>
+                        
+                        <div class="auth-tabs">
+                            <button class="auth-tab ${isLogin ? 'active' : ''}" onclick="setAuthMode('login')">Login</button>
+                            <button class="auth-tab ${!isLogin ? 'active' : ''}" onclick="setAuthMode('register')">Cadastrar</button>
+                        </div>
+                        
+                        <div id="authMessage" class="error-message" style="display: none;"></div>
+                        
+                        ${isLogin ? `
+                            <form id="loginForm">
+                                <div class="form-group">
+                                    <label>Usuário</label>
+                                    <input type="text" id="loginUsername" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Senha</label>
+                                    <input type="password" id="loginPassword" required>
+                                </div>
+                                <button type="submit" class="btn" style="width: 100%;">Entrar</button>
+                            </form>
+                        ` : `
+                            <form id="registerForm">
+                                <div class="form-group">
+                                    <label>Usuário</label>
+                                    <input type="text" id="regUsername" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" id="regEmail" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Senha</label>
+                                    <input type="password" id="regPassword" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Confirmar Senha</label>
+                                    <input type="password" id="regConfirmPassword" required>
+                                </div>
+                                <button type="submit" class="btn" style="width: 100%;">Cadastrar</button>
+                            </form>
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            if (isLogin) {
+                document.getElementById('loginForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const username = document.getElementById('loginUsername').value;
+                    const password = document.getElementById('loginPassword').value;
+                    const msgDiv = document.getElementById('authMessage');
+                    
+                    if (login(username, password)) {
+                        renderDashboard();
+                    } else {
+                        msgDiv.style.display = 'block';
+                        msgDiv.textContent = 'Usuário ou senha inválidos!';
+                    }
+                });
+            } else {
+                document.getElementById('registerForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const username = document.getElementById('regUsername').value;
+                    const email = document.getElementById('regEmail').value;
+                    const password = document.getElementById('regPassword').value;
+                    const confirmPassword = document.getElementById('regConfirmPassword').value;
+                    const msgDiv = document.getElementById('authMessage');
+                    
+                    if (password !== confirmPassword) {
+                        msgDiv.style.display = 'block';
+                        msgDiv.textContent = 'As senhas não coincidem!';
+                        return;
+                    }
+                    
+                    if (password.length < 4) {
+                        msgDiv.style.display = 'block';
+                        msgDiv.textContent = 'A senha deve ter pelo menos 4 caracteres!';
+                        return;
+                    }
+                    
+                    const result = register(username, password, email);
+                    if (result.success) {
+                        msgDiv.style.display = 'block';
+                        msgDiv.className = 'success-message';
+                        msgDiv.textContent = 'Cadastro realizado com sucesso! Faça login.';
+                        setTimeout(() => {
+                            state.authMode = 'login';
+                            renderAuth();
+                        }, 2000);
+                    } else {
+                        msgDiv.style.display = 'block';
+                        msgDiv.className = 'error-message';
+                        msgDiv.textContent = result.error;
+                    }
+                });
+            }
+        }
+        
+        function renderEventForm() {
+            const event = state.editingEvent;
+            return `
+                <div class="modal" id="eventModal">
+                    <div class="modal-content">
+                        <h2>${event ? 'Editar Evento' : 'Novo Evento'}</h2>
+                        <form id="eventForm">
+                            <div class="form-group">
+                                <label>Nome do Evento</label>
+                                <input type="text" name="name" value="${event?.name || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Nomes dos Noivos</label>
+                                <input type="text" name="couple_names" value="${event?.couple_names || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select name="event_type">
+                                    <option value="Casamento" ${event?.event_type === 'Casamento' ? 'selected' : ''}>Casamento</option>
+                                    <option value="Corporativo" ${event?.event_type === 'Corporativo' ? 'selected' : ''}>Corporativo</option>
+                                    <option value="Aniversário" ${event?.event_type === 'Aniversário' ? 'selected' : ''}>Aniversário</option>
+                                    <option value="Festa" ${event?.event_type === 'Festa' ? 'selected' : ''}>Festa</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tema</label>
+                                <select name="theme">
+                                    <option value="Clássico" ${event?.theme === 'Clássico' ? 'selected' : ''}>Clássico</option>
+                                    <option value="Moderno" ${event?.theme === 'Moderno' ? 'selected' : ''}>Moderno</option>
+                                    <option value="Rústico" ${event?.theme === 'Rústico' ? 'selected' : ''}>Rústico</option>
+                                    <option value="Luxo" ${event?.theme === 'Luxo' ? 'selected' : ''}>Luxo</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Orçamento Total (R$)</label>
+                                <input type="number" name="budget_total" value="${event?.budget_total || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Data</label>
+                                <input type="date" name="event_date" value="${event?.event_date || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label>Local</label>
+                                <input type="text" name="venue" value="${event?.venue || ''}">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn">Salvar</button>
+                                <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderGuestForm() {
+            const guest = state.editingGuest;
+            return `
+                <div class="modal" id="guestModal">
+                    <div class="modal-content">
+                        <h2>${guest ? 'Editar Convidado' : 'Novo Convidado'}</h2>
+                        <form id="guestForm">
+                            <div class="form-group">
+                                <label>Nome do Convidado *</label>
+                                <input type="text" name="name" value="${guest?.name || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Grupo/Família</label>
+                                <input type="text" name="group_name" value="${guest?.group_name || ''}" placeholder="Ex: Família Silva">
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status">
+                                    <option value="pendente" ${guest?.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                                    <option value="confirmado" ${guest?.status === 'confirmado' ? 'selected' : ''}>Confirmado</option>
+                                    <option value="recusado" ${guest?.status === 'recusado' ? 'selected' : ''}>Recusado</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Número da Mesa</label>
+                                <input type="text" name="table_name" value="${guest?.table_name || ''}" placeholder="Ex: Mesa 01">
+                            </div>
+                            <div class="form-group">
+                                <label>Telefone</label>
+                                <input type="text" name="phone" value="${guest?.phone || ''}" placeholder="(11) 99999-9999">
+                            </div>
+                            <div class="form-group">
+                                <label>Restrições Alimentares</label>
+                                <input type="text" name="dietary" value="${guest?.dietary || ''}" placeholder="Ex: Vegano, Alergia a frutos do mar">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn">Salvar Convidado</button>
+                                <button type="button" class="btn btn-secondary" onclick="closeGuestModal()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderSupplierForm() {
+            const supplier = state.editingSupplier;
+            return `
+                <div class="modal" id="supplierModal">
+                    <div class="modal-content">
+                        <h2>${supplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</h2>
+                        <form id="supplierForm">
+                            <div class="form-group">
+                                <label>Nome do Fornecedor *</label>
+                                <input type="text" name="name" value="${supplier?.name || ''}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria *</label>
+                                <select name="category" required>
+                                    <option value="">Selecione</option>
+                                    <option value="Buffet" ${supplier?.category === 'Buffet' ? 'selected' : ''}>Buffet</option>
+                                    <option value="Fotografia" ${supplier?.category === 'Fotografia' ? 'selected' : ''}>Fotografia</option>
+                                    <option value="Música" ${supplier?.category === 'Música' ? 'selected' : ''}>Música</option>
+                                    <option value="Decoração" ${supplier?.category === 'Decoração' ? 'selected' : ''}>Decoração</option>
+                                    <option value="Espaço" ${supplier?.category === 'Espaço' ? 'selected' : ''}>Espaço</option>
+                                    <option value="Vestuário" ${supplier?.category === 'Vestuário' ? 'selected' : ''}>Vestuário</option>
+                                    <option value="Outro" ${supplier?.category === 'Outro' ? 'selected' : ''}>Outro</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="status">
+                                    <option value="cotado" ${supplier?.status === 'cotado' ? 'selected' : ''}>Cotado</option>
+                                    <option value="negociacao" ${supplier?.status === 'negociacao' ? 'selected' : ''}>Negociação</option>
+                                    <option value="contratado" ${supplier?.status === 'contratado' ? 'selected' : ''}>Contratado</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Valor (R$)</label>
+                                <input type="number" name="value" value="${supplier?.value || 0}">
+                            </div>
+                            <div class="form-group">
+                                <label>Contato</label>
+                                <input type="text" name="contact" value="${supplier?.contact || ''}" placeholder="Telefone ou email">
+                            </div>
+                            <div class="form-group">
+                                <label>Nota (0-5)</label>
+                                <input type="number" name="score" step="0.1" min="0" max="5" value="${supplier?.score || 0}">
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn">Salvar Fornecedor</button>
+                                <button type="button" class="btn btn-secondary" onclick="closeSupplierModal()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderDashboard() {
+            const app = document.getElementById('app');
+            const currentEvent = state.events.find(e => e.id === state.selectedEvent);
+            const eventGuests = state.guests;
+            const eventSuppliers = state.suppliers;
+            
+            let modalHtml = '';
+            if (state.showEventForm) modalHtml += renderEventForm();
+            if (state.showGuestForm) modalHtml += renderGuestForm();
+            if (state.showSupplierForm) modalHtml += renderSupplierForm();
+            
+            app.innerHTML = `
+                <div class="header">
+                    <div class="logo">La Vie Casamentos</div>
+                    <div class="user-info">
+                        <div class="avatar">${state.user.username.charAt(0).toUpperCase()}</div>
+                        <span>${state.user.username}</span>
+                        <button class="btn-logout" onclick="logout()">Sair</button>
+                    </div>
+                </div>
+                
+                <div class="container">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Eventos</h3>
+                            <div class="stat-number">${state.events.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Convidados</h3>
+                            <div class="stat-number">${eventGuests.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Fornecedores</h3>
+                            <div class="stat-number">${eventSuppliers.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Orçamento</h3>
+                            <div class="stat-number">${formatCurrency(currentEvent?.budget_total || 0)}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-header">
+                        <h2>Meus Eventos</h2>
+                        <button class="btn" onclick="openEventModal()">+ Novo Evento</button>
+                    </div>
+                    
+                    ${state.events.length === 0 ? `
+                        <div class="empty-state">
+                            <p>Você ainda não tem nenhum evento cadastrado.</p>
+                            <button class="btn" onclick="openEventModal()" style="margin-top: 1rem;">Criar meu primeiro evento</button>
+                        </div>
+                    ` : `
+                        <div class="events-grid">
+                            ${state.events.map(event => `
+                                <div class="event-card ${state.selectedEvent === event.id ? 'selected' : ''}" onclick="selectEvent(${event.id})">
+                                    <div class="event-card-header">
+                                        <h3>${event.name || event.couple_names || 'Evento'}</h3>
+                                    </div>
+                                    <div class="event-card-body">
+                                        <p><strong>Tipo:</strong> ${event.event_type}</p>
+                                        <p><strong>Tema:</strong> ${event.theme}</p>
+                                        <p><strong>Orçamento:</strong> ${formatCurrency(event.budget_total)}</p>
+                                        <p><strong>Data:</strong> ${formatDate(event.event_date)}</p>
+                                        <p><strong>Local:</strong> ${event.venue || 'Não definido'}</p>
+                                    </div>
+                                    <div style="padding: 0 1rem 1rem; display: flex; gap: 0.5rem;">
+                                        <button class="btn-secondary" style="flex:1; padding:0.5rem;" onclick="event.stopPropagation(); editEvent(${event.id})">✏️ Editar</button>
+                                        <button class="btn-secondary" style="flex:1; padding:0.5rem; background:#fee2e2;" onclick="event.stopPropagation(); deleteEventConfirm(${event.id})">🗑️ Excluir</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `}
+                    
+                    ${state.selectedEvent && currentEvent ? `
+                        <div>
+                            <div class="section-header" style="margin-top: 2rem;">
+                                <h2>🎉 Gerenciando: ${currentEvent.name || currentEvent.couple_names || 'Evento'}</h2>
+                                <button class="btn-secondary" onclick="selectEvent(null)">Trocar Evento</button>
+                            </div>
+                            
+                            <div class="section-header" style="margin-top: 2rem;">
+                                <h2>👥 Convidados</h2>
+                                <button class="btn" onclick="openGuestModal()">+ Adicionar Convidado</button>
+                            </div>
+                            
+                            ${eventGuests.length === 0 ? `
+                                <div class="empty-state">
+                                    <p>Nenhum convidado cadastrado.</p>
+                                    <button class="btn" onclick="openGuestModal()" style="margin-top: 0.5rem;">Adicionar primeiro convidado</button>
+                                </div>
+                            ` : `
+                                <div class="guest-list">
+                                    ${eventGuests.map(guest => `
+                                        <div class="guest-card">
+                                            <div>
+                                                <strong>${guest.name}</strong>
+                                                <div style="font-size:0.75rem; color:#64748b;">
+                                                    ${guest.group_name ? `👥 ${guest.group_name} • ` : ''}
+                                                    ${guest.table_name ? `Mesa: ${guest.table_name}` : ''}
+                                                </div>
+                                                <div style="font-size:0.75rem; color:#64748b;">
+                                                    ${guest.status === 'confirmado' ? '✅ Confirmado' : guest.status === 'recusado' ? '❌ Recusado' : '⏳ Pendente'}
+                                                    ${guest.phone ? ` • 📞 ${guest.phone}` : ''}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <button class="btn-icon" onclick="editGuest(${guest.id})" title="Editar">✏️</button>
+                                                <button class="btn-icon" onclick="deleteGuestConfirm(${guest.id})" title="Excluir">🗑️</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                            
+                            <div class="section-header" style="margin-top: 2rem;">
+                                <h2>🏢 Fornecedores</h2>
+                                <button class="btn" onclick="openSupplierModal()">+ Adicionar Fornecedor</button>
+                            </div>
+                            
+                            ${eventSuppliers.length === 0 ? `
+                                <div class="empty-state">
+                                    <p>Nenhum fornecedor cadastrado.</p>
+                                    <button class="btn" onclick="openSupplierModal()" style="margin-top: 0.5rem;">Adicionar primeiro fornecedor</button>
+                                </div>
+                            ` : `
+                                <div class="supplier-list">
+                                    ${eventSuppliers.map(supplier => `
+                                        <div class="supplier-card">
+                                            <div>
+                                                <strong>${supplier.name}</strong>
+                                                <div style="font-size:0.75rem; color:#64748b;">📂 ${supplier.category}</div>
+                                                <div style="font-size:0.75rem; color:#64748b;">💰 ${formatCurrency(supplier.value)}</div>
+                                                <div style="font-size:0.75rem; color:#64748b;">
+                                                    ${supplier.status === 'contratado' ? '✅ Contratado' : supplier.status === 'negociacao' ? '🤝 Negociação' : '📄 Cotado'}
+                                                    ${supplier.contact ? ` • 📞 ${supplier.contact}` : ''}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <button class="btn-icon" onclick="editSupplier(${supplier.id})" title="Editar">✏️</button>
+                                                <button class="btn-icon" onclick="deleteSupplierConfirm(${supplier.id})" title="Excluir">🗑️</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `}
+                        </div>
+                    ` : state.events.length > 0 ? `
+                        <div class="empty-state">
+                            <p>Clique em um evento acima para gerenciar convidados e fornecedores.</p>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                ${modalHtml}
+            `;
+            
+            if (state.showEventForm) {
+                document.getElementById('eventForm').addEventListener('submit', handleEventSubmit);
+            }
+            if (state.showGuestForm) {
+                document.getElementById('guestForm').addEventListener('submit', handleGuestSubmit);
+            }
+            if (state.showSupplierForm) {
+                document.getElementById('supplierForm').addEventListener('submit', handleSupplierSubmit);
+            }
+        }
+        
+        // ============================================
+        // HANDLERS
+        // ============================================
+        
+        async function handleEventSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            data.budget_total = parseFloat(data.budget_total || 0);
+            
+            let success;
+            if (state.editingEvent) {
+                success = updateEvent(state.editingEvent.id, data);
+            } else {
+                success = createEvent(data);
+            }
+            
+            if (success) {
+                closeEventModal();
+                renderDashboard();
+            } else {
+                alert('Erro ao salvar evento');
+            }
+        }
+        
+        async function handleGuestSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            data.event_id = state.selectedEvent;
+            
+            let success;
+            if (state.editingGuest) {
+                success = updateGuest(state.editingGuest.id, data);
+            } else {
+                success = createGuest(data);
+            }
+            
+            if (success) {
+                closeGuestModal();
+                renderDashboard();
+            } else {
+                alert('Erro ao salvar convidado');
+            }
+        }
+        
+        async function handleSupplierSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            data.event_id = state.selectedEvent;
+            data.value = parseFloat(data.value || 0);
+            data.score = parseFloat(data.score || 0);
+            
+            let success;
+            if (state.editingSupplier) {
+                success = updateSupplier(state.editingSupplier.id, data);
+            } else {
+                success = createSupplier(data);
+            }
+            
+            if (success) {
+                closeSupplierModal();
+                renderDashboard();
+            } else {
+                alert('Erro ao salvar fornecedor');
+            }
+        }
+        
+        // ============================================
+        // FUNÇÕES GLOBAIS
+        // ============================================
+        
+        window.setAuthMode = (mode) => {
+            state.authMode = mode;
+            renderAuth();
+        };
+        
+        window.selectEvent = (eventId) => {
+            state.selectedEvent = eventId;
+            loadEventData(eventId);
+            renderDashboard();
+        };
+        
+        window.openEventModal = () => {
+            state.editingEvent = null;
+            state.showEventForm = true;
+            renderDashboard();
+        };
+        
+        window.editEvent = (eventId) => {
+            state.editingEvent = state.events.find(e => e.id === eventId);
+            state.showEventForm = true;
+            renderDashboard();
+        };
+        
+        window.closeEventModal = () => {
+            state.showEventForm = false;
+            state.editingEvent = null;
+            renderDashboard();
+        };
+        
+        window.deleteEventConfirm = (eventId) => {
+            if (confirm('Tem certeza que deseja excluir este evento?')) {
+                deleteEvent(eventId);
+                renderDashboard();
+            }
+        };
+        
+        window.openGuestModal = () => {
+            if (!state.selectedEvent) {
+                alert('Selecione um evento primeiro!');
+                return;
+            }
+            state.editingGuest = null;
+            state.showGuestForm = true;
+            renderDashboard();
+        };
+        
+        window.editGuest = (guestId) => {
+            state.editingGuest = state.guests.find(g => g.id === guestId);
+            state.showGuestForm = true;
+            renderDashboard();
+        };
+        
+        window.closeGuestModal = () => {
+            state.showGuestForm = false;
+            state.editingGuest = null;
+            renderDashboard();
+        };
+        
+        window.deleteGuestConfirm = (guestId) => {
+            if (confirm('Tem certeza que deseja excluir este convidado?')) {
+                deleteGuest(guestId);
+                renderDashboard();
+            }
+        };
+        
+        window.openSupplierModal = () => {
+            if (!state.selectedEvent) {
+                alert('Selecione um evento primeiro!');
+                return;
+            }
+            state.editingSupplier = null;
+            state.showSupplierForm = true;
+            renderDashboard();
+        };
+        
+        window.editSupplier = (supplierId) => {
+            state.editingSupplier = state.suppliers.find(s => s.id === supplierId);
+            state.showSupplierForm = true;
+            renderDashboard();
+        };
+        
+        window.closeSupplierModal = () => {
+            state.showSupplierForm = false;
+            state.editingSupplier = null;
+            renderDashboard();
+        };
+        
+        window.deleteSupplierConfirm = (supplierId) => {
+            if (confirm('Tem certeza que deseja excluir este fornecedor?')) {
+                deleteSupplier(supplierId);
+                renderDashboard();
+            }
+        };
+        
+        window.logout = logout;
+        
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+        
+        function init() {
+            renderAuth();
+        }
+        
+        init();
+    </script>
+</body>
+</html>
