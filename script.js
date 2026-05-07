@@ -1,65 +1,22 @@
 // ============================================
-// LA VIE CASAMENTOS - SCRIPT COMPLETO
+// LA VIE CASAMENTOS - SCRIPT COMPLETO COM FIREBASE
 // ============================================
 
-// Banco de dados local
-let USUARIOS = JSON.parse(localStorage.getItem('usuarios')) || {};
-let globalEvents = JSON.parse(localStorage.getItem('globalEvents')) || [];
-let globalGuests = JSON.parse(localStorage.getItem('globalGuests')) || [];
-let globalSuppliers = JSON.parse(localStorage.getItem('globalSuppliers')) || [];
-let globalTasks = JSON.parse(localStorage.getItem('globalTasks')) || [];
-let nextIds = JSON.parse(localStorage.getItem('nextIds')) || { event: 1, guest: 1, supplier: 1, task: 1 };
+import { 
+    auth,
+    loginWithGoogle, loginWithEmail, registerWithEmail, logoutUser,
+    createEvent, getUserEvents, updateEvent, deleteEvent,
+    createGuest, getEventGuests, updateGuest, deleteGuest,
+    createSupplier, getEventSuppliers, updateSupplier, deleteSupplier,
+    createTask, getUserTasks, updateTask, deleteTask, toggleTaskComplete,
+    updateUserProfile, getUserProfile, onAuthChange,
+    sendPasswordResetEmailFunction, sendVerificationEmail,
+    createDefaultTasksForEvent
+} from './firebase-config.js';
 
-// Criar admin automaticamente
-if (!USUARIOS['admin']) {
-    USUARIOS['admin'] = {
-        id: 1,
-        username: 'admin',
-        password: 'admin123',
-        email: 'admin@lavie.com',
-        is_admin: true,
-        profile: {
-            fullName: 'Administrador',
-            cpf: '000.000.000-00',
-            birthDate: '1990-01-01',
-            address: 'Rua Administrativa, 123',
-            phone: '(11) 99999-9999',
-            photo: null
-        }
-    };
-    localStorage.setItem('usuarios', JSON.stringify(USUARIOS));
-}
-
-// Criar tarefas padrão se não existirem
-if (globalTasks.length === 0) {
-    const tarefasPadrao = [
-        { name: "Definir orçamento do casamento", category: "12 meses", priority: "alta" },
-        { name: "Escolher a data do casamento", category: "12 meses", priority: "alta" },
-        { name: "Pesquisar e reservar o espaço", category: "12 meses", priority: "alta" },
-        { name: "Contratar buffet", category: "9 meses", priority: "alta" },
-        { name: "Escolher o vestido de noiva", category: "9 meses", priority: "alta" },
-        { name: "Contratar fotógrafo e videografista", category: "6 meses", priority: "alta" },
-        { name: "Contratar música/DJ", category: "6 meses", priority: "media" },
-        { name: "Enviar os convites", category: "3 meses", priority: "alta" },
-        { name: "Confirmar fornecedores", category: "3 meses", priority: "alta" },
-        { name: "Confirmar lista de convidados final", category: "1 mês", priority: "alta" },
-        { name: "Relaxar e aproveitar o grande dia!", category: "Dia do Casamento", priority: "alta" }
-    ];
-
-    tarefasPadrao.forEach((task) => {
-        globalTasks.push({
-            id: nextIds.task++,
-            event_id: null,
-            ...task,
-            completed: false,
-            due_date: "",
-            created_at: new Date().toISOString()
-        });
-    });
-    localStorage.setItem('globalTasks', JSON.stringify(globalTasks));
-}
-
-// Estado
+// ============================================
+// ESTADO GLOBAL
+// ============================================
 let state = {
     user: null,
     events: [],
@@ -83,93 +40,184 @@ let state = {
     charts: {}
 };
 
-function salvarDados() {
-    localStorage.setItem('usuarios', JSON.stringify(USUARIOS));
-    localStorage.setItem('globalEvents', JSON.stringify(globalEvents));
-    localStorage.setItem('globalGuests', JSON.stringify(globalGuests));
-    localStorage.setItem('globalSuppliers', JSON.stringify(globalSuppliers));
-    localStorage.setItem('globalTasks', JSON.stringify(globalTasks));
-    localStorage.setItem('nextIds', JSON.stringify(nextIds));
+// ============================================
+// FUNÇÃO AUXILIAR PARA ESCAPAR HTML
+// ============================================
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // ============================================
-// FUNÇÕES DE AUTENTICAÇÃO
+// FUNÇÃO DE RECUPERAÇÃO DE SENHA
 // ============================================
 
-function register(username, password, email) {
-    if (USUARIOS[username]) return { success: false, error: 'Usuário já existe!' };
-    const emailExistente = Object.values(USUARIOS).some(u => u.email === email);
-    if (emailExistente) return { success: false, error: 'Email já cadastrado!' };
+window.forgotPassword = async function() {
+    const email = prompt('Digite seu e-mail para recuperar a senha:');
+    if (!email || !email.includes('@')) {
+        alert('Por favor, digite um e-mail válido');
+        return;
+    }
+    const result = await sendPasswordResetEmailFunction(email);
+    if (result.success) {
+        alert('Email de recuperação enviado! Verifique sua caixa de entrada.');
+    } else {
+        alert(result.error === 'auth/user-not-found' ? 'Usuário não encontrado' : 'Erro ao enviar email');
+    }
+};
 
-    USUARIOS[username] = {
-        id: Object.keys(USUARIOS).length + 1,
-        username, password, email,
-        is_admin: false,
-        profile: {
-            fullName: '',
-            cpf: '',
-            birthDate: '',
-            address: '',
-            phone: '',
-            photo: null
-        }
-    };
-    salvarDados();
-    return { success: true };
-}
+// ============================================
+// FUNÇÃO PARA REENVIAR VERIFICAÇÃO DE EMAIL
+// ============================================
 
-function login(username, password) {
-    const user = USUARIOS[username];
-    if (user && user.password === password) {
-        state.user = { ...user };
-        state.events = globalEvents.filter(e => e.user_id === user.id);
-        state.tasks = globalTasks.filter(t => !t.event_id || t.event_id === null);
-        state.selectedEvent = null;
-        state.guests = [];
-        state.suppliers = [];
-        state.activeTab = 'dashboard';
+window.resendVerification = async function() {
+    const email = prompt('Digite seu e-mail para receber um novo link de verificação:');
+    if (!email || !email.includes('@')) {
+        alert('Por favor, digite um e-mail válido');
+        return;
+    }
+    const result = await loginWithEmail(email, 'dummy');
+    if (result.error === 'email-not-verified') {
+        const sendResult = await sendVerificationEmail();
+        alert(sendResult.success ? 'Novo email enviado!' : 'Erro ao enviar');
+    } else {
+        alert(result.success ? 'Email já verificado!' : 'Usuário não encontrado');
+    }
+};
+
+// ============================================
+// VERIFICAR E CRIAR TAREFAS PADRÃO
+// ============================================
+
+async function ensureEventHasTasks(eventId) {
+    const tasks = await getUserTasks(state.user.id, eventId);
+    if (tasks.length === 0) {
+        await createDefaultTasksForEvent(state.user.id, eventId);
         return true;
     }
     return false;
 }
 
-function logout() {
-    state.user = null;
-    state.events = [];
-    state.selectedEvent = null;
-    state.guests = [];
-    state.suppliers = [];
-    state.tasks = [];
-    Object.values(state.charts).forEach(c => c?.destroy());
-    renderAuth();
-}
-
 // ============================================
-// FUNÇÕES DE PERFIL
+// EXPORTAÇÃO DE CONVIDADOS PARA EXCEL
 // ============================================
 
-function updateProfile(profileData) {
-    if (state.user) {
-        USUARIOS[state.user.username].profile = { ...USUARIOS[state.user.username].profile, ...profileData };
-        state.user.profile = { ...state.user.profile, ...profileData };
-        salvarDados();
-        renderDashboard();
-        showNotification('Perfil atualizado com sucesso!', 'success');
-        return true;
+window.exportGuestsToExcel = function() {
+    if (!state.selectedEvent) {
+        alert('Selecione um evento primeiro!');
+        return;
     }
-    return false;
+    if (state.guests.length === 0) {
+        alert('Nenhum convidado para exportar!');
+        return;
+    }
+    
+    const currentEvent = state.events.find(e => e.id === state.selectedEvent);
+    const eventName = currentEvent?.name || currentEvent?.couple_names || 'Evento';
+    const confirmados = state.guests.filter(g => g.status === 'confirmado').length;
+    const pendentes = state.guests.filter(g => g.status === 'pendente').length;
+    const recusados = state.guests.filter(g => g.status === 'recusado').length;
+    
+    const headers = ['Nome do Convidado', 'Grupo/Família', 'Status', 'Mesa', 'Telefone', 'Data de Cadastro'];
+    const csvRows = [headers.join(',')];
+    
+    for (const guest of state.guests) {
+        csvRows.push([
+            `"${guest.name || ''}"`,
+            `"${guest.group_name || ''}"`,
+            guest.status === 'confirmado' ? 'Confirmado' : guest.status === 'recusado' ? 'Recusado' : 'Pendente',
+            `"${guest.table_name || ''}"`,
+            `"${guest.phone || ''}"`,
+            new Date(guest.created_at || Date.now()).toLocaleDateString('pt-BR')
+        ].join(','));
+    }
+    
+    csvRows.push('');
+    csvRows.push('"RESUMO DO EVENTO"');
+    csvRows.push(`"Evento:","${eventName}"`);
+    csvRows.push(`"Total de Convidados:","${state.guests.length}"`);
+    csvRows.push(`"Confirmados:","${confirmados}"`);
+    csvRows.push(`"Pendentes:","${pendentes}"`);
+    csvRows.push(`"Recusados:","${recusados}"`);
+    csvRows.push(`"Taxa de Confirmação:","${((confirmados / state.guests.length) * 100).toFixed(1)}%"`);
+    
+    const blob = new Blob(["\uFEFF" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    const dataAtual = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    link.download = `convidados_${eventName.replace(/[^a-z0-9]/gi, '_')}_${dataAtual}.csv`;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+    showNotification(`${state.guests.length} convidados exportados!`, 'success');
+};
+
+// ============================================
+// EXPORTAÇÃO DE FORNECEDORES PARA EXCEL
+// ============================================
+
+window.exportSuppliersToExcel = function() {
+    if (!state.selectedEvent) {
+        alert('Selecione um evento primeiro!');
+        return;
+    }
+    if (state.suppliers.length === 0) {
+        alert('Nenhum fornecedor para exportar!');
+        return;
+    }
+    
+    const currentEvent = state.events.find(e => e.id === state.selectedEvent);
+    const eventName = currentEvent?.name || currentEvent?.couple_names || 'Evento';
+    const totalGasto = state.suppliers.reduce((sum, s) => sum + (s.value || 0), 0);
+    
+    const categorias = {};
+    state.suppliers.forEach(s => {
+        const cat = s.category || 'Outros';
+        categorias[cat] = (categorias[cat] || 0) + (s.value || 0);
+    });
+    
+    const headers = ['Nome do Fornecedor', 'Categoria', 'Status', 'Valor (R$)', 'Contato', 'Data de Cadastro'];
+    const csvRows = [headers.join(',')];
+    
+    for (const supplier of state.suppliers) {
+        csvRows.push([
+            `"${supplier.name || ''}"`,
+            `"${supplier.category || ''}"`,
+            supplier.status === 'contratado' ? 'Contratado' : supplier.status === 'negociacao' ? 'Negociação' : 'Cotado',
+            supplier.value || 0,
+            `"${supplier.contact || ''}"`,
+            new Date(supplier.created_at || Date.now()).toLocaleDateString('pt-BR')
+        ].join(','));
+    }
+    
+    csvRows.push('');
+    csvRows.push('"RESUMO FINANCEIRO"');
+    csvRows.push(`"Total Gasto:","${totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}"`);
+    
+    const blob = new Blob(["\uFEFF" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const dataAtual = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    link.download = `fornecedores_${eventName.replace(/[^a-z0-9]/gi, '_')}_${dataAtual}.csv`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showNotification(`${state.suppliers.length} fornecedores exportados!`, 'success');
+};
+
+// ============================================
+// FUNÇÕES AUXILIARES
+// ============================================
+
+function formatCurrency(v) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 }
 
-function updateProfilePhoto(photoBase64) {
-    if (state.user) {
-        USUARIOS[state.user.username].profile.photo = photoBase64;
-        state.user.profile.photo = photoBase64;
-        salvarDados();
-        renderDashboard();
-        showNotification('Foto de perfil atualizada!', 'success');
-        return true;
-    }
-    return false;
+function formatDate(d) {
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('pt-BR');
 }
 
 function showNotification(message, type) {
@@ -186,192 +234,6 @@ function showNotification(message, type) {
     notification.textContent = message;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 3000);
-}
-
-// ============================================
-// FUNÇÃO DE VALIDAÇÃO DE DATA DUPLICADA
-// ============================================
-
-function isDateDuplicate(date, excludeEventId = null) {
-    return state.events.some(event => {
-        if (excludeEventId && event.id === excludeEventId) return false;
-        return event.event_date === date;
-    });
-}
-
-// ============================================
-// CRUD EVENTOS
-// ============================================
-
-function createEvent(data) {
-    // Verificar se a data já existe
-    if (data.event_date && isDateDuplicate(data.event_date)) {
-        alert('Data já selecionada! Por favor, escolha outra data.');
-        return false;
-    }
-    
-    const newEvent = { id: nextIds.event++, user_id: state.user.id, ...data };
-    globalEvents.push(newEvent);
-    state.events.push(newEvent);
-    salvarDados();
-    return true;
-}
-
-function updateEvent(id, data) {
-    // Verificar se a data já existe (excluindo o próprio evento)
-    if (data.event_date && isDateDuplicate(data.event_date, id)) {
-        alert('Data já selecionada! Por favor, escolha outra data.');
-        return false;
-    }
-    
-    const index = globalEvents.findIndex(e => e.id === id);
-    if (index !== -1) {
-        globalEvents[index] = { ...globalEvents[index], ...data };
-        const ui = state.events.findIndex(e => e.id === id);
-        if (ui !== -1) state.events[ui] = { ...state.events[ui], ...data };
-        salvarDados();
-        return true;
-    }
-    return false;
-}
-
-function deleteEvent(id) {
-    globalEvents = globalEvents.filter(e => e.id !== id);
-    state.events = state.events.filter(e => e.id !== id);
-    globalGuests = globalGuests.filter(g => g.event_id !== id);
-    globalSuppliers = globalSuppliers.filter(s => s.event_id !== id);
-    globalTasks = globalTasks.filter(t => t.event_id !== id);
-    if (state.selectedEvent === id) {
-        state.selectedEvent = null;
-        state.guests = [];
-        state.suppliers = [];
-        state.tasks = globalTasks.filter(t => !t.event_id);
-    }
-    salvarDados();
-    return true;
-}
-
-// ============================================
-// CRUD CONVIDADOS
-// ============================================
-
-function createGuest(data) {
-    const newGuest = { id: nextIds.guest++, ...data };
-    globalGuests.push(newGuest);
-    if (newGuest.event_id === state.selectedEvent) state.guests.push(newGuest);
-    salvarDados();
-    return true;
-}
-
-function updateGuest(id, data) {
-    const index = globalGuests.findIndex(g => g.id === id);
-    if (index !== -1) {
-        globalGuests[index] = { ...globalGuests[index], ...data };
-        const ui = state.guests.findIndex(g => g.id === id);
-        if (ui !== -1) state.guests[ui] = { ...state.guests[ui], ...data };
-        salvarDados();
-        return true;
-    }
-    return false;
-}
-
-function deleteGuest(id) {
-    globalGuests = globalGuests.filter(g => g.id !== id);
-    state.guests = state.guests.filter(g => g.id !== id);
-    salvarDados();
-    return true;
-}
-
-// ============================================
-// CRUD FORNECEDORES
-// ============================================
-
-function createSupplier(data) {
-    const newSupplier = { id: nextIds.supplier++, ...data, created_at: new Date().toISOString() };
-    globalSuppliers.push(newSupplier);
-    if (newSupplier.event_id === state.selectedEvent) state.suppliers.push(newSupplier);
-    salvarDados();
-    return true;
-}
-
-function updateSupplier(id, data) {
-    const index = globalSuppliers.findIndex(s => s.id === id);
-    if (index !== -1) {
-        globalSuppliers[index] = { ...globalSuppliers[index], ...data };
-        const ui = state.suppliers.findIndex(s => s.id === id);
-        if (ui !== -1) state.suppliers[ui] = { ...state.suppliers[ui], ...data };
-        salvarDados();
-        return true;
-    }
-    return false;
-}
-
-function deleteSupplier(id) {
-    globalSuppliers = globalSuppliers.filter(s => s.id !== id);
-    state.suppliers = state.suppliers.filter(s => s.id !== id);
-    salvarDados();
-    return true;
-}
-
-// ============================================
-// CRUD TAREFAS
-// ============================================
-
-function createTask(data) {
-    const newTask = { id: nextIds.task++, ...data, completed: false, created_at: new Date().toISOString() };
-    globalTasks.push(newTask);
-    state.tasks.push(newTask);
-    salvarDados();
-    return true;
-}
-
-function updateTask(id, data) {
-    const index = globalTasks.findIndex(t => t.id === id);
-    if (index !== -1) {
-        globalTasks[index] = { ...globalTasks[index], ...data };
-        const ui = state.tasks.findIndex(t => t.id === id);
-        if (ui !== -1) state.tasks[ui] = { ...state.tasks[ui], ...data };
-        salvarDados();
-        return true;
-    }
-    return false;
-}
-
-function deleteTask(id) {
-    globalTasks = globalTasks.filter(t => t.id !== id);
-    state.tasks = state.tasks.filter(t => t.id !== id);
-    salvarDados();
-    return true;
-}
-
-function toggleTaskComplete(id) {
-    const task = globalTasks.find(t => t.id === id);
-    if (task) {
-        task.completed = !task.completed;
-        const uiTask = state.tasks.find(t => t.id === id);
-        if (uiTask) uiTask.completed = task.completed;
-        salvarDados();
-        renderDashboard();
-    }
-}
-
-function loadEventData(id) {
-    state.guests = globalGuests.filter(g => g.event_id === id);
-    state.suppliers = globalSuppliers.filter(s => s.event_id === id);
-    state.tasks = globalTasks.filter(t => t.event_id === id || !t.event_id);
-}
-
-// ============================================
-// UTILITÁRIOS
-// ============================================
-
-function formatCurrency(v) {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-}
-
-function formatDate(d) {
-    if (!d) return '';
-    return new Date(d).toLocaleDateString('pt-BR');
 }
 
 function getTotalGasto() {
@@ -398,10 +260,16 @@ function getStatusConvidados() {
 }
 
 function getProgressoChecklist() {
-    const tarefasEvento = state.tasks;
-    if (tarefasEvento.length === 0) return 0;
-    const concluidas = tarefasEvento.filter(t => t.completed).length;
-    return (concluidas / tarefasEvento.length) * 100;
+    if (state.tasks.length === 0) return 0;
+    const concluidas = state.tasks.filter(t => t.completed).length;
+    return (concluidas / state.tasks.length) * 100;
+}
+
+async function loadEventData(id) {
+    state.guests = await getEventGuests(id);
+    state.suppliers = await getEventSuppliers(id);
+    await ensureEventHasTasks(id);
+    state.tasks = await getUserTasks(state.user.id, id);
 }
 
 // ============================================
@@ -417,7 +285,6 @@ function criarGraficos() {
     if (ctxPie1 && state.charts.pizzaCategorias) state.charts.pizzaCategorias.destroy();
     if (ctxPie2 && state.charts.pizzaStatus) state.charts.pizzaStatus.destroy();
 
-    // Gráfico de pizza - Gastos por Categoria
     const gastos = getGastosPorCategoria();
     if (ctxPie1 && Object.keys(gastos).length > 0) {
         state.charts.pizzaCategorias = new Chart(ctxPie1, {
@@ -440,7 +307,6 @@ function criarGraficos() {
         });
     }
 
-    // Gráfico de pizza - Status dos Convidados
     const status = getStatusConvidados();
     if (ctxPie2 && state.guests.length > 0) {
         state.charts.pizzaStatus = new Chart(ctxPie2, {
@@ -457,7 +323,7 @@ function criarGraficos() {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'bottom', labels: { color: '#fff' } },
-                    tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} convidados (${((ctx.raw / state.guests.length) * 100).toFixed(1)}%)` } }
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} convidados` } }
                 }
             }
         });
@@ -470,35 +336,53 @@ function criarGraficos() {
 
 function renderPerfil() {
     const profile = state.user?.profile || {};
-    const photoUrl = profile.photo || '';
+    const photoUrl = profile.photo || state.user?.photoURL || '';
 
     return `
-        <div class="profile-section">
-            <div class="profile-header">
-                <div class="profile-avatar">
-                    <div class="profile-avatar-large" id="profileAvatar">
-                        ${photoUrl ? `<img src="${photoUrl}" alt="Foto de perfil">` : `<span>${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}
+        <div class="profile-section" style="background: #1a1a1a; border-radius: 1rem; padding: 2rem; border: 1px solid #333;">
+            <div class="profile-header" style="display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
+                <div class="profile-avatar" style="text-align: center;">
+                    <div class="profile-avatar-large" id="profileAvatar" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #ffb347); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 0.5rem; overflow: hidden;">
+                        ${photoUrl ? `<img src="${photoUrl}" alt="Foto" style="width: 100%; height: 100%; object-fit: cover;">` : `<span style="color: #1a1a1a;">${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}
                     </div>
                     <input type="file" id="photoUpload" accept="image/*" style="display: none;">
-                    <button class="btn-secondary" onclick="document.getElementById('photoUpload').click()">Alterar Foto</button>
+                    <button class="btn-secondary" id="changePhotoBtn" style="margin-top: 0.5rem;">Alterar Foto</button>
                 </div>
                 <div class="profile-info">
-                    <h2>${profile.fullName || state.user?.username || 'Usuário'}</h2>
-                    <p>${state.user?.email || ''}</p>
-                    <p>Membro desde ${new Date().toLocaleDateString('pt-BR')}</p>
+                    <h2 style="color: #ffd700;">${escapeHtml(profile.fullName || state.user?.username || 'Usuário')}</h2>
+                    <p style="color: #888;">${state.user?.email || ''}</p>
+                    <p style="color: #888;">Membro desde ${new Date().toLocaleDateString('pt-BR')}</p>
                 </div>
             </div>
 
             <form id="profileForm">
-                <div class="profile-form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                    <div class="form-group"><label>Nome Completo</label><input type="text" name="fullName" value="${profile.fullName || ''}" placeholder="Seu nome completo"></div>
-                    <div class="form-group"><label>CPF</label><input type="text" name="cpf" value="${profile.cpf || ''}" placeholder="000.000.000-00" maxlength="14"></div>
-                    <div class="form-group"><label>Data de Nascimento</label><input type="date" name="birthDate" value="${profile.birthDate || ''}"></div>
-                    <div class="form-group"><label>Telefone</label><input type="tel" name="phone" value="${profile.phone || ''}" placeholder="(11) 99999-9999"></div>
-                    <div class="form-group" style="grid-column: span 2;"><label>Endereço</label><input type="text" name="address" value="${profile.address || ''}" placeholder="Rua, número, bairro, cidade"></div>
-                    <div class="form-group"><label>Email</label><input type="email" value="${state.user?.email || ''}" disabled style="background: #333;"></div>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div class="form-group">
+                        <label style="color: #ffd700;">Nome Completo</label>
+                        <input type="text" name="fullName" value="${escapeHtml(profile.fullName || '')}" placeholder="Seu nome completo" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                    </div>
+                    <div class="form-group">
+                        <label style="color: #ffd700;">CPF</label>
+                        <input type="text" name="cpf" value="${escapeHtml(profile.cpf || '')}" placeholder="000.000.000-00" maxlength="14" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                    </div>
+                    <div class="form-group">
+                        <label style="color: #ffd700;">Data de Nascimento</label>
+                        <input type="date" name="birthDate" value="${profile.birthDate || ''}" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                    </div>
+                    <div class="form-group">
+                        <label style="color: #ffd700;">Telefone</label>
+                        <input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="(11) 99999-9999" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label style="color: #ffd700;">Endereço</label>
+                        <input type="text" name="address" value="${escapeHtml(profile.address || '')}" placeholder="Rua, número, bairro, cidade" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                    </div>
+                    <div class="form-group">
+                        <label style="color: #ffd700;">Email</label>
+                        <input type="email" value="${state.user?.email || ''}" disabled style="width: 100%; padding: 0.75rem; background: #333; border: 1px solid #333; border-radius: 8px; color: #888;">
+                    </div>
                 </div>
-                <button type="submit" class="btn">Salvar Alterações</button>
+                <button type="submit" class="btn" style="margin-top: 1.5rem; background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; cursor: pointer; font-weight: bold;">Salvar Alterações</button>
             </form>
         </div>
     `;
@@ -520,25 +404,23 @@ function renderChecklist() {
     });
 
     const categoryOrder = ['12 meses', '9 meses', '6 meses', '3 meses', '1 mês', '1 semana', 'Dia do Casamento'];
-    const totalTasks = state.tasks.length;
-    const completedTasks = state.tasks.filter(t => t.completed).length;
-    const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    const progress = getProgressoChecklist();
 
     return `
-        <div class="checklist-section">
+        <div class="checklist-section" style="background: #1a1a1a; border-radius: 1rem; padding: 1.5rem; border: 1px solid #333;">
             <div class="checklist-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                <h2>Checklist do Casamento</h2>
-                <div class="checklist-filters">
-                    <button class="filter-btn ${state.taskFilter === 'all' ? 'active' : ''}" onclick="setTaskFilter('all')">Todas</button>
-                    <button class="filter-btn ${state.taskFilter === 'pending' ? 'active' : ''}" onclick="setTaskFilter('pending')">Pendentes</button>
-                    <button class="filter-btn ${state.taskFilter === 'completed' ? 'active' : ''}" onclick="setTaskFilter('completed')">Concluídas</button>
-                    <button class="btn" onclick="openTaskModal()">Nova Tarefa</button>
+                <h2 style="color: #ffd700;">Checklist do Casamento</h2>
+                <div class="checklist-filters" style="display: flex; gap: 0.5rem;">
+                    <button class="filter-btn ${state.taskFilter === 'all' ? 'active' : ''}" onclick="window.setTaskFilter('all')" style="padding: 0.25rem 0.75rem; border: 1px solid #ffd700; background: ${state.taskFilter === 'all' ? '#ffd700' : 'transparent'}; border-radius: 20px; cursor: pointer; color: ${state.taskFilter === 'all' ? '#1a1a1a' : '#ffd700'};">Todas</button>
+                    <button class="filter-btn ${state.taskFilter === 'pending' ? 'active' : ''}" onclick="window.setTaskFilter('pending')" style="padding: 0.25rem 0.75rem; border: 1px solid #ffd700; background: ${state.taskFilter === 'pending' ? '#ffd700' : 'transparent'}; border-radius: 20px; cursor: pointer; color: ${state.taskFilter === 'pending' ? '#1a1a1a' : '#ffd700'};">Pendentes</button>
+                    <button class="filter-btn ${state.taskFilter === 'completed' ? 'active' : ''}" onclick="window.setTaskFilter('completed')" style="padding: 0.25rem 0.75rem; border: 1px solid #ffd700; background: ${state.taskFilter === 'completed' ? '#ffd700' : 'transparent'}; border-radius: 20px; cursor: pointer; color: ${state.taskFilter === 'completed' ? '#1a1a1a' : '#ffd700'};">Concluídas</button>
+                    <button class="btn" onclick="window.openTaskModal()" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.25rem 0.75rem; border-radius: 20px; cursor: pointer;">Nova Tarefa</button>
                 </div>
             </div>
 
             <div class="progress-section" style="margin-bottom: 1rem;">
-                <h3>Progresso: ${progress.toFixed(0)}% concluído</h3>
-                <div class="progress-bar"><div class="progress-fill" style="width: ${progress}%">${progress.toFixed(0)}%</div></div>
+                <h3 style="color: #ffd700;">Progresso: ${progress.toFixed(0)}% concluído</h3>
+                <div class="progress-bar" style="background: #333; border-radius: 10px; height: 20px; overflow: hidden;"><div class="progress-fill" style="background: linear-gradient(90deg, #ffd700, #ffb347); height: 100%; width: ${progress}%; display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; color: #1a1a1a; font-size: 0.7rem;">${progress.toFixed(0)}%</div></div>
             </div>
 
             ${categoryOrder.map(cat => {
@@ -546,25 +428,28 @@ function renderChecklist() {
                 if (tasks.length === 0) return '';
                 const concluidas = tasks.filter(t => t.completed).length;
                 return `
-                    <div class="checklist-category">
-                        <div class="category-title"><span>${cat}</span><span>${concluidas}/${tasks.length} concluídas</span></div>
+                    <div class="checklist-category" style="margin-bottom: 1.5rem;">
+                        <div class="category-title" style="font-size: 1.1rem; font-weight: bold; padding: 0.5rem; background: #252525; border-left: 3px solid #ffd700; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; color: #ffd700;">
+                            <span>${cat}</span><span>${concluidas}/${tasks.length} concluídas</span>
+                        </div>
                         ${tasks.map(task => `
-                            <div class="task-item">
-                                <input type="checkbox" class="task-check" ${task.completed ? 'checked' : ''} onchange="toggleTaskComplete(${task.id})">
-                                <div class="task-content">
-                                    <div class="task-name">${task.name}<span class="task-priority priority-${task.priority}">${task.priority === 'alta' ? 'Alta' : task.priority === 'media' ? 'Média' : 'Baixa'}</span></div>
-                                    ${task.due_date ? `<div class="task-due-date">Vence: ${formatDate(task.due_date)}</div>` : ''}
+                            <div class="task-item" style="display: flex; align-items: center; padding: 0.75rem; background: #252525; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid #333;">
+                                <input type="checkbox" class="task-check" ${task.completed ? 'checked' : ''} onchange="window.toggleTaskComplete('${task.id}')" style="width: 20px; height: 20px; margin-right: 1rem; cursor: pointer; accent-color: #ffd700;">
+                                <div class="task-content" style="flex: 1;">
+                                    <div class="task-name" style="font-weight: 600; color: #fff;">${task.name}<span class="task-priority priority-${task.priority}" style="display: inline-block; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.7rem; margin-left: 0.5rem; background: ${task.priority === 'alta' ? '#e11d48' : task.priority === 'media' ? '#ffd700' : '#10b981'}; color: ${task.priority === 'media' ? '#1a1a1a' : '#fff'};">${task.priority === 'alta' ? 'Alta' : task.priority === 'media' ? 'Média' : 'Baixa'}</span></div>
+                                    ${task.due_date ? `<div class="task-due-date" style="font-size: 0.7rem; color: #888; margin-top: 0.25rem;">Vence: ${formatDate(task.due_date)}</div>` : ''}
                                 </div>
-                                <div class="task-actions">
-                                    <button class="btn-icon" onclick="editTask(${task.id})">✏️</button>
-                                    <button class="btn-icon" onclick="deleteTaskConfirm(${task.id})">🗑️</button>
+                                <div class="task-actions" style="display: flex; gap: 0.5rem;">
+                                    ${!task.completed ? `<button class="btn-small" onclick="window.completeTask('${task.id}')" style="background: #10b981; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem;">Concluir</button>` : ''}
+                                    <button class="btn-small" onclick="window.editTask('${task.id}')" style="background: #ffd700; color: #1a1a1a; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem;">Editar</button>
+                                    <button class="btn-small" onclick="window.deleteTaskConfirm('${task.id}')" style="background: #e11d48; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem;">Excluir</button>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 `;
             }).join('')}
-            ${filteredTasks.length === 0 ? '<div class="empty-state">Nenhuma tarefa encontrada!</div>' : ''}
+            ${filteredTasks.length === 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem; color: #888;">Nenhuma tarefa encontrada!</div>' : ''}
         </div>
     `;
 }
@@ -584,27 +469,106 @@ function renderCalendario() {
     for (let i = 0; i < primeiroDiaSemana; i++) dias.push(null);
     for (let i = 1; i <= diasNoMes; i++) {
         const dataAtual = new Date(state.calendarYear, state.calendarMonth, i);
-        const temEvento = state.events.some(event => new Date(event.event_date).toDateString() === dataAtual.toDateString());
+        const temEvento = state.events.some(event => {
+            if (!event.event_date) return false;
+            const eventDate = new Date(event.event_date);
+            return eventDate.getDate() === dataAtual.getDate() &&
+                   eventDate.getMonth() === dataAtual.getMonth() &&
+                   eventDate.getFullYear() === dataAtual.getFullYear();
+        });
         dias.push({ dia: i, temEvento, data: dataAtual });
     }
 
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    
     return `
-        <div class="calendar-section">
-            <div class="calendar-header"><h3>${primeiraSemana.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3>
-            <div><button class="btn-secondary" onclick="mudarMes(-1)">◀</button><button class="btn-secondary" onclick="mudarMes(1)">▶</button></div></div>
-            <div class="calendar-grid">
-                ${diasSemana.map(d => `<div class="calendar-weekday">${d}</div>`).join('')}
-                ${dias.map(dia => dia === null ? '<div class="calendar-day"></div>' : `<div class="calendar-day ${dia.temEvento ? 'has-event' : ''}" onclick="selecionarDataCalendario('${dia.data.toISOString()}')">${dia.dia}${dia.temEvento ? '🎉' : ''}</div>`).join('')}
+        <div class="calendar-section" style="background: #1a1a1a; border-radius: 1rem; padding: 1.5rem; border: 1px solid #333;">
+            <div class="calendar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <h3 style="color: #ffd700;">${monthNames[state.calendarMonth]} ${state.calendarYear}</h3>
+                <div>
+                    <button class="btn-secondary" onclick="window.mudarMes(-1)" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700; margin-right: 0.5rem;">◀ Anterior</button>
+                    <button class="btn-secondary" onclick="window.mudarMes(1)" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Próximo ▶</button>
+                </div>
+            </div>
+            <div class="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;">
+                ${diasSemana.map(d => `<div class="calendar-weekday" style="text-align: center; font-weight: bold; color: #ffd700; padding: 0.5rem;">${d}</div>`).join('')}
+                ${dias.map(dia => {
+                    if (dia === null) {
+                        return '<div class="calendar-day empty" style="padding: 0.5rem; text-align: center; opacity: 0.3;"></div>';
+                    }
+                    return `<div class="calendar-day ${dia.temEvento ? 'has-event' : ''}" 
+                                   data-date="${dia.data.toISOString()}" 
+                                   style="padding: 0.5rem; text-align: center; cursor: pointer; border-radius: 8px; transition: all 0.3s; ${dia.temEvento ? 'background: #ffd700; color: #1a1a1a; font-weight: bold;' : 'background: #252525; color: #fff;'}"
+                                   onclick="window.selecionarDataCalendario('${dia.data.toISOString()}')">
+                        ${dia.dia}
+                    </div>`;
+                }).join('')}
             </div>
         </div>
     `;
 }
 
 // ============================================
-// RENDERIZAÇÃO DO DASHBOARD
+// FUNÇÃO PARA SELECIONAR DATA NO CALENDÁRIO
 // ============================================
 
-function renderDashboard() {
+window.selecionarDataCalendario = async (dataISO) => {
+    console.log('Data clicada:', dataISO);
+    const data = new Date(dataISO);
+    const evento = state.events.find(event => {
+        if (!event.event_date) return false;
+        const eventDate = new Date(event.event_date);
+        return eventDate.getDate() === data.getDate() &&
+               eventDate.getMonth() === data.getMonth() &&
+               eventDate.getFullYear() === data.getFullYear();
+    });
+    
+    if (evento) { 
+        console.log('Evento encontrado:', evento);
+        state.selectedEvent = evento.id; 
+        await loadEventData(evento.id);
+        window.setActiveTab('dashboard');
+        showNotification(`Evento: ${evento.name || evento.couple_names}`, 'success');
+    } else {
+        showNotification('Nenhum evento nesta data', 'error');
+    }
+};
+
+// ============================================
+// FUNÇÕES DE TEMAS
+// ============================================
+
+window.toggleThemeMenu = function() {
+    const menu = document.getElementById('themeMenu');
+    if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+};
+
+window.applyTheme = function(theme) {
+    document.body.classList.remove('theme-rose', 'theme-blue', 'theme-green', 'theme-purple', 'theme-dark');
+    if (theme !== 'gold') {
+        document.body.classList.add(`theme-${theme}`);
+    }
+    localStorage.setItem('selectedTheme', theme);
+    const menu = document.getElementById('themeMenu');
+    if (menu) menu.style.display = 'none';
+    const themeNames = { gold: 'Dourado', rose: 'Rosa', blue: 'Azul', green: 'Verde', purple: 'Roxo', dark: 'Dark' };
+    showNotification(`Tema ${themeNames[theme]} aplicado!`, 'success');
+};
+
+function loadSavedTheme() {
+    const savedTheme = localStorage.getItem('selectedTheme');
+    if (savedTheme && savedTheme !== 'gold') {
+        document.body.classList.add(`theme-${savedTheme}`);
+    }
+}
+
+// ============================================
+// RENDERIZAÇÃO DO DASHBOARD PRINCIPAL
+// ============================================
+
+async function renderDashboard() {
     const app = document.getElementById('app');
     const currentEvent = state.events.find(e => e.id === state.selectedEvent);
     const totalGasto = getTotalGasto();
@@ -612,7 +576,7 @@ function renderDashboard() {
     const percentual = orcamentoTotal > 0 ? (totalGasto / orcamentoTotal) * 100 : 0;
     const progressoChecklist = getProgressoChecklist();
     const profile = state.user?.profile || {};
-    const photoUrl = profile.photo || '';
+    const photoUrl = profile.photo || state.user?.photoURL || '';
 
     let modalHtml = '';
     if (state.showEventForm) modalHtml = renderEventForm();
@@ -621,100 +585,101 @@ function renderDashboard() {
     if (state.showTaskForm) modalHtml = renderTaskForm();
 
     app.innerHTML = `
-        <div class="header">
-            <div class="tabs">
-                <button class="tab ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="setActiveTab('dashboard')">Dashboard</button>
-                <button class="tab ${state.activeTab === 'checklist' ? 'active' : ''}" onclick="setActiveTab('checklist')">Checklist</button>
-                <button class="tab ${state.activeTab === 'events' ? 'active' : ''}" onclick="setActiveTab('events')">Eventos</button>
-                <button class="tab ${state.activeTab === 'calendar' ? 'active' : ''}" onclick="setActiveTab('calendar')">Calendário</button>
+        <div class="header" style="background: linear-gradient(135deg, #1a1a2e, #0f0f1a); border-bottom: 2px solid #ffd700; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div class="tabs" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="tab ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="window.setActiveTab('dashboard')" style="padding: 0.5rem 1rem; background: ${state.activeTab === 'dashboard' ? 'linear-gradient(135deg, #ffd700, #ffb347)' : '#1a1a1a'}; border: 1px solid #333; border-radius: 8px; cursor: pointer; color: ${state.activeTab === 'dashboard' ? '#1a1a1a' : '#ccc'};">Dashboard</button>
+                <button class="tab ${state.activeTab === 'checklist' ? 'active' : ''}" onclick="window.setActiveTab('checklist')" style="padding: 0.5rem 1rem; background: ${state.activeTab === 'checklist' ? 'linear-gradient(135deg, #ffd700, #ffb347)' : '#1a1a1a'}; border: 1px solid #333; border-radius: 8px; cursor: pointer; color: ${state.activeTab === 'checklist' ? '#1a1a1a' : '#ccc'};">Checklist</button>
+                <button class="tab ${state.activeTab === 'events' ? 'active' : ''}" onclick="window.setActiveTab('events')" style="padding: 0.5rem 1rem; background: ${state.activeTab === 'events' ? 'linear-gradient(135deg, #ffd700, #ffb347)' : '#1a1a1a'}; border: 1px solid #333; border-radius: 8px; cursor: pointer; color: ${state.activeTab === 'events' ? '#1a1a1a' : '#ccc'};">Eventos</button>
+                <button class="tab ${state.activeTab === 'calendar' ? 'active' : ''}" onclick="window.setActiveTab('calendar')" style="padding: 0.5rem 1rem; background: ${state.activeTab === 'calendar' ? 'linear-gradient(135deg, #ffd700, #ffb347)' : '#1a1a1a'}; border: 1px solid #333; border-radius: 8px; cursor: pointer; color: ${state.activeTab === 'calendar' ? '#1a1a1a' : '#ccc'};">Calendário</button>
             </div>
-            <div class="user-info" onclick="setActiveTab('profile')">
-                <div class="profile-pic">${photoUrl ? `<img src="${photoUrl}" alt="Perfil">` : `<span>${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}</div>
-                <span>${state.user?.username}</span>
-                <button class="btn-logout" onclick="event.stopPropagation(); logout()">Sair</button>
+            <div class="user-info" onclick="window.setActiveTab('profile')" style="display: flex; align-items: center; gap: 1rem; cursor: pointer;">
+                <div class="profile-pic" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #ffb347); display: flex; align-items: center; justify-content: center; overflow: hidden;">${photoUrl ? `<img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span>${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}</div>
+                <span style="color: #ffd700;">${state.user?.username}</span>
+                <button class="btn-logout" onclick="event.stopPropagation(); window.logout()" style="background: rgba(255, 215, 0, 0.2); border: 1px solid #ffd700; padding: 0.25rem 0.75rem; border-radius: 8px; color: #ffd700; cursor: pointer;">Sair</button>
             </div>
         </div>
-        <div class="container">
-            <div class="tab-content ${state.activeTab === 'dashboard' ? 'active' : ''}">
+        <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+            <div class="tab-content ${state.activeTab === 'dashboard' ? 'active' : ''}" style="${state.activeTab !== 'dashboard' ? 'display: none;' : ''}">
                 ${state.selectedEvent && currentEvent ? `
-                    <div class="stats-grid">
-                        <div class="stat-card"><h3>Eventos</h3><div class="stat-number">${state.events.length}</div></div>
-                        <div class="stat-card"><h3>Convidados</h3><div class="stat-number">${state.guests.length}</div></div>
-                        <div class="stat-card"><h3>Fornecedores</h3><div class="stat-number">${state.suppliers.length}</div></div>
-                        <div class="stat-card"><h3>Tarefas</h3><div class="stat-number">${state.tasks.filter(t => t.completed).length}/${state.tasks.length}</div></div>
+                    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div class="stat-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333;"><h3 style="color: #ffd700;">Eventos</h3><div class="stat-number" style="font-size: 2rem; color: #fff;">${state.events.length}</div></div>
+                        <div class="stat-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333;"><h3 style="color: #ffd700;">Convidados</h3><div class="stat-number" style="font-size: 2rem; color: #fff;">${state.guests.length}</div></div>
+                        <div class="stat-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333;"><h3 style="color: #ffd700;">Fornecedores</h3><div class="stat-number" style="font-size: 2rem; color: #fff;">${state.suppliers.length}</div></div>
+                        <div class="stat-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333;"><h3 style="color: #ffd700;">Tarefas</h3><div class="stat-number" style="font-size: 2rem; color: #fff;">${state.tasks.filter(t => t.completed).length}/${state.tasks.length}</div></div>
                     </div>
-                    <div class="budget-grid">
-                        <div class="budget-card used">
-                            <h3>Utilizado</h3>
-                            <div class="budget-value">${formatCurrency(totalGasto)}</div>
-                            <small>${percentual.toFixed(1)}% do total</small>
-                        </div>
-                        <div class="budget-card available">
-                            <h3>Disponível</h3>
-                            <div class="budget-value">${formatCurrency(orcamentoTotal - totalGasto)}</div>
-                            <small>${(100 - percentual).toFixed(1)}% restante</small>
-                        </div>
+                    <div class="budget-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+                        <div class="budget-card used" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333; border-left: 4px solid #ffd700;"><h3 style="color: #fff;">Utilizado</h3><div class="budget-value" style="font-size: 1.8rem; color: #ffd700;">${formatCurrency(totalGasto)}</div><small style="color: #fff;">${percentual.toFixed(1)}% do total</small></div>
+                        <div class="budget-card available" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333; border-left: 4px solid #10b981;"><h3 style="color: #fff;">Disponível</h3><div class="budget-value" style="font-size: 1.8rem; color: #10b981;">${formatCurrency(orcamentoTotal - totalGasto)}</div><small style="color: #fff;">${(100 - percentual).toFixed(1)}% restante</small></div>
                     </div>
-                    <div class="progress-section">
-                        <h3>Progresso do Orçamento: ${percentual.toFixed(1)}%</h3>
-                        <div class="progress-bar"><div class="progress-fill" style="width: ${percentual}%"></div></div>
-                        <h3>Checklist: ${progressoChecklist.toFixed(0)}%</h3>
-                        <div class="progress-bar"><div class="progress-fill" style="width: ${progressoChecklist}%"></div></div>
+                    <div class="progress-section" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; margin-bottom: 2rem;">
+                        <h3 style="color: #ffd700;">Progresso do Orçamento: ${percentual.toFixed(1)}%</h3>
+                        <div class="progress-bar" style="background: #333; border-radius: 10px; height: 20px; overflow: hidden; margin: 0.5rem 0;"><div class="progress-fill" style="background: linear-gradient(90deg, #ffd700, #ffb347); width: ${percentual}%; height: 100%;"></div></div>
+                        <h3 style="color: #ffd700;">Checklist: ${progressoChecklist.toFixed(0)}%</h3>
+                        <div class="progress-bar" style="background: #333; border-radius: 10px; height: 20px; overflow: hidden; margin: 0.5rem 0;"><div class="progress-fill" style="background: linear-gradient(90deg, #ffd700, #ffb347); width: ${progressoChecklist}%; height: 100%;"></div></div>
                     </div>
-                    <div class="charts-grid">
-                        <div class="chart-card"><h3>Gastos por Categoria</h3><div class="chart-container"><canvas id="graficoPizzaCategorias"></canvas></div></div>
-                        <div class="chart-card"><h3>Status dos Convidados</h3><div class="chart-container"><canvas id="graficoPizzaStatus"></canvas></div></div>
+                    <div class="charts-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                        <div class="chart-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; border: 1px solid #333;"><h3 style="color: #ffd700;">Gastos por Categoria</h3><div class="chart-container" style="height: 250px;"><canvas id="graficoPizzaCategorias"></canvas></div></div>
+                        <div class="chart-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; border: 1px solid #333;"><h3 style="color: #ffd700;">Status dos Convidados</h3><div class="chart-container" style="height: 250px;"><canvas id="graficoPizzaStatus"></canvas></div></div>
                     </div>
-                ` : `<div class="empty-state"><p>Selecione um evento para ver o dashboard!</p><button class="btn" onclick="setActiveTab('events')">Ver meus eventos</button></div>`}
+                ` : `<div class="empty-state" style="text-align: center; padding: 2rem; background: #1a1a1a; border-radius: 1rem;"><p>Selecione um evento para ver o dashboard!</p><button class="btn" onclick="window.setActiveTab('events')" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 1rem;">Ver meus eventos</button></div>`}
             </div>
 
-            <div class="tab-content ${state.activeTab === 'checklist' ? 'active' : ''}">${renderChecklist()}</div>
+            <div class="tab-content ${state.activeTab === 'checklist' ? 'active' : ''}" style="${state.activeTab !== 'checklist' ? 'display: none;' : ''}">${renderChecklist()}</div>
 
-            <div class="tab-content ${state.activeTab === 'events' ? 'active' : ''}">
-                <div class="section-header"><h2>Meus Eventos</h2><button class="btn" onclick="openEventModal()">Novo Evento</button></div>
-                ${state.events.length === 0 ? '<div class="empty-state">Nenhum evento. Crie seu primeiro evento!</div>' : `
-                    <div class="events-grid">${state.events.map(event => {
-                        const gastosEvento = globalSuppliers.filter(s => s.event_id === event.id).reduce((s, i) => s + (i.value || 0), 0);
+            <div class="tab-content ${state.activeTab === 'events' ? 'active' : ''}" style="${state.activeTab !== 'events' ? 'display: none;' : ''}">
+                <div class="section-header" style="display: flex; justify-content: space-between; margin: 1rem 0;"><h2 style="color: #ffd700;">Meus Eventos</h2><button class="btn" onclick="window.openEventModal()" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Novo Evento</button></div>
+                ${state.events.length === 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem; background: #1a1a1a; border-radius: 1rem;">Nenhum evento. Crie seu primeiro evento!</div>' : `
+                    <div class="events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">${state.events.map(event => {
+                        const gastosEvento = state.suppliers.filter(s => s.event_id === event.id).reduce((s, i) => s + (i.value || 0), 0);
                         const perc = event.budget_total ? (gastosEvento / event.budget_total) * 100 : 0;
-                        return `<div class="event-card ${state.selectedEvent === event.id ? 'selected' : ''}" onclick="selectEvent(${event.id})">
-                            <div class="event-card-header"><h4>${event.name || event.couple_names || 'Evento'}</h4></div>
-                            <div class="event-card-body">
-                                <p><strong>Tipo:</strong> ${event.event_type || 'Tipo'}</p>
-                                <p><strong>Orçamento:</strong> ${formatCurrency(event.budget_total)}</p>
-                                <p><strong>Gasto:</strong> ${formatCurrency(gastosEvento)} (${perc.toFixed(0)}%)</p>
-                                <p><strong>Data:</strong> ${formatDate(event.event_date)}</p>
+                        return `<div class="event-card ${state.selectedEvent === event.id ? 'selected' : ''}" onclick="window.selectEvent('${event.id}')" style="background: #1a1a1a; border-radius: 1rem; overflow: hidden; cursor: pointer; border: 1px solid ${state.selectedEvent === event.id ? '#ffd700' : '#333'}; transition: all 0.3s;">
+                            <div class="event-card-header" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; padding: 1rem;"><h4>${event.name || event.couple_names || 'Evento'}</h4></div>
+                            <div class="event-card-body" style="padding: 1rem;">
+                                <p style="margin: 0.5rem 0; color: #ccc;"><strong style="color: #ffd700;">Tipo:</strong> ${event.event_type || 'Tipo'}</p>
+                                <p style="margin: 0.5rem 0; color: #ccc;"><strong style="color: #ffd700;">Orçamento:</strong> ${formatCurrency(event.budget_total)}</p>
+                                <p style="margin: 0.5rem 0; color: #ccc;"><strong style="color: #ffd700;">Gasto:</strong> ${formatCurrency(gastosEvento)} (${perc.toFixed(0)}%)</p>
+                                <p style="margin: 0.5rem 0; color: #ccc;"><strong style="color: #ffd700;">Data:</strong> ${formatDate(event.event_date)}</p>
                             </div>
-                            <div style="padding:0.75rem; display:flex; gap:0.5rem;">
-                                <button class="btn-secondary" style="flex:1" onclick="event.stopPropagation(); editEvent(${event.id})">Editar</button>
-                                <button class="btn-secondary" style="flex:1" onclick="event.stopPropagation(); deleteEventConfirm(${event.id})">Excluir</button>
+                            <div style="padding: 0.75rem; display: flex; gap: 0.5rem;">
+                                <button class="btn-secondary" style="flex: 1; background: #252525; border: 1px solid #ffd700; padding: 0.25rem; border-radius: 8px; cursor: pointer; color: #ffd700;" onclick="event.stopPropagation(); window.editEvent('${event.id}')">Editar</button>
+                                <button class="btn-secondary" style="flex: 1; background: #252525; border: 1px solid #e11d48; padding: 0.25rem; border-radius: 8px; cursor: pointer; color: #e11d48;" onclick="event.stopPropagation(); window.deleteEventConfirm('${event.id}')">Excluir</button>
                             </div>
                         </div>`;
                     }).join('')}</div>
                 `}
                 ${state.selectedEvent && currentEvent ? `
-                    <div><div class="section-header"><h2>Gerenciando: ${currentEvent.name || currentEvent.couple_names || 'Evento'}</h2><button class="btn-secondary" onclick="selectEvent(null)">Trocar Evento</button></div>
-                    <div class="section-header"><h2>Convidados</h2><button class="btn" onclick="openGuestModal()">Adicionar</button></div>
-                    <div class="guest-list">${state.guests.map(g => `<div class="guest-card"><div><strong>${g.name}</strong><div style="font-size:0.7rem; color:#888;">${g.status === 'confirmado' ? 'Confirmado' : g.status === 'recusado' ? 'Recusado' : 'Pendente'}${g.table_name ? ` • Mesa ${g.table_name}` : ''}</div></div><div><button class="btn-icon" onclick="editGuest(${g.id})">✏️</button><button class="btn-icon" onclick="deleteGuestConfirm(${g.id})">🗑️</button></div></div>`).join('')}${state.guests.length === 0 ? '<div class="empty-state">Nenhum convidado</div>' : ''}</div>
-                    <div class="section-header"><h2>Fornecedores</h2><button class="btn" onclick="openSupplierModal()">Adicionar</button></div>
-                    <div class="supplier-list">${state.suppliers.map(s => `<div class="supplier-card"><div><strong>${s.name}</strong><div style="font-size:0.7rem; color:#888;">${s.category} • ${formatCurrency(s.value)}<br>${s.status === 'contratado' ? 'Contratado' : s.status === 'negociacao' ? 'Negociação' : 'Cotado'}</div></div><div><button class="btn-icon" onclick="editSupplier(${s.id})">✏️</button><button class="btn-icon" onclick="deleteSupplierConfirm(${s.id})">🗑️</button></div></div>`).join('')}${state.suppliers.length === 0 ? '<div class="empty-state">Nenhum fornecedor</div>' : ''}</div></div>
-                ` : state.events.length > 0 ? '<div class="empty-state">Clique em um evento para gerenciar</div>' : ''}
+                    <div style="margin-top: 2rem;">
+                        <div class="section-header" style="display: flex; justify-content: space-between; margin: 1rem 0;"><h2 style="color: #ffd700;">Gerenciando: ${currentEvent.name || currentEvent.couple_names || 'Evento'}</h2><button class="btn-secondary" onclick="window.selectEvent(null)" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Trocar Evento</button></div>
+                        
+                        <div class="section-header" style="display: flex; justify-content: space-between; margin: 1rem 0;">
+                            <h2 style="color: #ffd700;">Convidados</h2>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn" onclick="window.openGuestModal()" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Adicionar</button>
+                                <button class="btn-secondary" onclick="window.exportGuestsToExcel()" style="background: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: white;">Exportar Excel</button>
+                            </div>
+                        </div>
+                        <div class="guest-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">${state.guests.map(g => `<div class="guest-card" style="background: #252525; padding: 1rem; border-radius: 0.5rem; display: flex; justify-content: space-between; border: 1px solid #333; color: #fff;"><div><strong style="color: #ffd700;">${g.name}</strong><div style="font-size: 0.7rem; color: #888;">${g.status === 'confirmado' ? 'Confirmado' : g.status === 'recusado' ? 'Recusado' : 'Pendente'}${g.table_name ? ` • Mesa ${g.table_name}` : ''}</div></div><div style="display: flex; gap: 0.5rem;"><button class="btn-small" onclick="window.editGuest('${g.id}')" style="background: #ffd700; color: #1a1a1a; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer;">Editar</button><button class="btn-small" onclick="window.deleteGuestConfirm('${g.id}')" style="background: #e11d48; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer;">Excluir</button></div></div>`).join('')}${state.guests.length === 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem; color: #888;">Nenhum convidado</div>' : ''}</div>
+                        
+                        <div class="section-header" style="display: flex; justify-content: space-between; margin: 1rem 0;">
+                            <h2 style="color: #ffd700;">Fornecedores</h2>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn" onclick="window.openSupplierModal()" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Adicionar</button>
+                                <button class="btn-secondary" onclick="window.exportSuppliersToExcel()" style="background: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: white;">Exportar Excel</button>
+                            </div>
+                        </div>
+                        <div class="supplier-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">${state.suppliers.map(s => `<div class="supplier-card" style="background: #252525; padding: 1rem; border-radius: 0.5rem; display: flex; justify-content: space-between; border: 1px solid #333; color: #fff;"><div><strong style="color: #ffd700;">${s.name}</strong><div style="font-size: 0.7rem; color: #888;">${s.category} • ${formatCurrency(s.value)}<br>${s.status === 'contratado' ? 'Contratado' : s.status === 'negociacao' ? 'Negociação' : 'Cotado'}</div></div><div style="display: flex; gap: 0.5rem;"><button class="btn-small" onclick="window.editSupplier('${s.id}')" style="background: #ffd700; color: #1a1a1a; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer;">Editar</button><button class="btn-small" onclick="window.deleteSupplierConfirm('${s.id}')" style="background: #e11d48; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer;">Excluir</button></div></div>`).join('')}${state.suppliers.length === 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem; color: #888;">Nenhum fornecedor</div>' : ''}</div>
+                    </div>
+                ` : state.events.length > 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem;">Clique em um evento para gerenciar</div>' : ''}
             </div>
 
-            <div class="tab-content ${state.activeTab === 'calendar' ? 'active' : ''}">${renderCalendario()}</div>
-            <div class="tab-content ${state.activeTab === 'profile' ? 'active' : ''}">${renderPerfil()}</div>
+            <div class="tab-content ${state.activeTab === 'calendar' ? 'active' : ''}" style="${state.activeTab !== 'calendar' ? 'display: none;' : ''}">${renderCalendario()}</div>
+            <div class="tab-content ${state.activeTab === 'profile' ? 'active' : ''}" style="${state.activeTab !== 'profile' ? 'display: none;' : ''}">${renderPerfil()}</div>
         </div>
         ${modalHtml}
     `;
+    
     criarGraficos();
-
-    const profileForm = document.getElementById('profileForm');
-    if (profileForm) profileForm.addEventListener('submit', (e) => { e.preventDefault(); updateProfile(Object.fromEntries(new FormData(e.target))); });
-    const photoUpload = document.getElementById('photoUpload');
-    if (photoUpload) photoUpload.addEventListener('change', (e) => { const file = e.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = (event) => updateProfilePhoto(event.target.result); reader.readAsDataURL(file); } });
-    if (state.showEventForm) document.getElementById('eventForm')?.addEventListener('submit', handleEventSubmit);
-    if (state.showGuestForm) document.getElementById('guestForm')?.addEventListener('submit', handleGuestSubmit);
-    if (state.showSupplierForm) document.getElementById('supplierForm')?.addEventListener('submit', handleSupplierSubmit);
-    if (state.showTaskForm) document.getElementById('taskForm')?.addEventListener('submit', handleTaskSubmit);
+    attachFormEvents();
 }
 
 // ============================================
@@ -723,219 +688,266 @@ function renderDashboard() {
 
 function renderEventForm() {
     const event = state.editingEvent;
-    return `<div class="modal" id="eventModal"><div class="modal-content"><h2>${event ? 'Editar Evento' : 'Novo Evento'}</h2>
+    return `<div class="modal" id="eventModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;"><div class="modal-content" style="background: #1a1a1a; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; border: 1px solid #ffd700;"><h2 style="color: #ffd700;">${event ? 'Editar Evento' : 'Novo Evento'}</h2>
         <form id="eventForm">
-            <div class="form-group"><label>Nome do Evento</label><input type="text" name="name" value="${event?.name || ''}" placeholder="Ex: Casamento Ana e João"></div>
-            <div class="form-group"><label>Nomes dos Noivos</label><input type="text" name="couple_names" value="${event?.couple_names || ''}" placeholder="Ana & João"></div>
-            <div class="form-group"><label>Tipo</label><select name="event_type"><option>Casamento</option><option>Corporativo</option><option>Aniversário</option><option>Festa</option></select></div>
-            <div class="form-group"><label>Tema</label><select name="theme"><option>Clássico</option><option>Moderno</option><option>Rústico</option><option>Luxo</option></select></div>
-            <div class="form-group"><label>Orçamento (R$)</label><input type="number" name="budget_total" value="${event?.budget_total || ''}" placeholder="0,00"></div>
-            <div class="form-group"><label>Data do Evento</label><input type="date" name="event_date" value="${event?.event_date || ''}"></div>
-            <div class="form-group"><label>Local</label><input type="text" name="venue" value="${event?.venue || ''}" placeholder="Local do evento"></div>
-            <div style="display:flex; gap:1rem;"><button type="submit" class="btn">Salvar</button><button type="button" class="btn-secondary" onclick="closeEventModal()">Cancelar</button></div>
+            <div class="form-group"><label style="color: #ffd700;">Nome do Evento</label><input type="text" name="name" value="${event?.name || ''}" placeholder="Ex: Casamento Ana e João" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Nomes dos Noivos</label><input type="text" name="couple_names" value="${event?.couple_names || ''}" placeholder="Ana & João" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Tipo</label><select name="event_type" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>Casamento</option><option>Corporativo</option><option>Aniversário</option><option>Festa</option></select></div>
+            <div class="form-group"><label style="color: #ffd700;">Tema</label><select name="theme" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>Clássico</option><option>Moderno</option><option>Rústico</option><option>Luxo</option></select></div>
+            <div class="form-group"><label style="color: #ffd700;">Orçamento (R$)</label><input type="number" name="budget_total" value="${event?.budget_total || ''}" placeholder="0,00" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Data do Evento</label><input type="date" name="event_date" value="${event?.event_date || ''}" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Local</label><input type="text" name="venue" value="${event?.venue || ''}" placeholder="Local do evento" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeEventModal()" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Cancelar</button></div>
         </form></div></div>`;
 }
 
 function renderGuestForm() {
     const guest = state.editingGuest;
-    return `<div class="modal" id="guestModal"><div class="modal-content"><h2>${guest ? 'Editar Convidado' : 'Novo Convidado'}</h2>
+    return `<div class="modal" id="guestModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;"><div class="modal-content" style="background: #1a1a1a; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; border: 1px solid #ffd700;"><h2 style="color: #ffd700;">${guest ? 'Editar Convidado' : 'Novo Convidado'}</h2>
         <form id="guestForm">
-            <div class="form-group"><label>Nome do Convidado</label><input type="text" name="name" value="${guest?.name || ''}" required placeholder="Nome completo"></div>
-            <div class="form-group"><label>Grupo/Família</label><input type="text" name="group_name" value="${guest?.group_name || ''}" placeholder="Ex: Família Silva"></div>
-            <div class="form-group"><label>Status</label><select name="status"><option>pendente</option><option>confirmado</option><option>recusado</option></select></div>
-            <div class="form-group"><label>Número da Mesa</label><input type="text" name="table_name" value="${guest?.table_name || ''}" placeholder="Mesa 01"></div>
-            <div class="form-group"><label>Telefone</label><input type="text" name="phone" value="${guest?.phone || ''}" placeholder="(11) 99999-9999"></div>
-            <div style="display:flex; gap:1rem;"><button type="submit" class="btn">Salvar</button><button type="button" class="btn-secondary" onclick="closeGuestModal()">Cancelar</button></div>
+            <div class="form-group"><label style="color: #ffd700;">Nome do Convidado</label><input type="text" name="name" value="${guest?.name || ''}" required placeholder="Nome completo" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Grupo/Família</label><input type="text" name="group_name" value="${guest?.group_name || ''}" placeholder="Ex: Família Silva" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Status</label><select name="status" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>pendente</option><option>confirmado</option><option>recusado</option></select></div>
+            <div class="form-group"><label style="color: #ffd700;">Número da Mesa</label><input type="text" name="table_name" value="${guest?.table_name || ''}" placeholder="Mesa 01" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Telefone</label><input type="text" name="phone" value="${guest?.phone || ''}" placeholder="(11) 99999-9999" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeGuestModal()" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Cancelar</button></div>
         </form></div></div>`;
 }
 
 function renderSupplierForm() {
     const supplier = state.editingSupplier;
-    return `<div class="modal" id="supplierModal"><div class="modal-content"><h2>${supplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</h2>
+    return `<div class="modal" id="supplierModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;"><div class="modal-content" style="background: #1a1a1a; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; border: 1px solid #ffd700;"><h2 style="color: #ffd700;">${supplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</h2>
         <form id="supplierForm">
-            <div class="form-group"><label>Nome do Fornecedor</label><input type="text" name="name" value="${supplier?.name || ''}" required placeholder="Nome do fornecedor"></div>
-            <div class="form-group"><label>Categoria</label><select name="category"><option>Buffet</option><option>Fotografia</option><option>Música</option><option>Decoração</option><option>Espaço</option><option>Vestuário</option><option>Outro</option></select></div>
-            <div class="form-group"><label>Status</label><select name="status"><option>cotado</option><option>negociacao</option><option>contratado</option></select></div>
-            <div class="form-group"><label>Valor (R$)</label><input type="number" name="value" value="${supplier?.value || 0}" placeholder="0,00"></div>
-            <div class="form-group"><label>Contato</label><input type="text" name="contact" value="${supplier?.contact || ''}" placeholder="Telefone ou email"></div>
-            <div style="display:flex; gap:1rem;"><button type="submit" class="btn">Salvar</button><button type="button" class="btn-secondary" onclick="closeSupplierModal()">Cancelar</button></div>
+            <div class="form-group"><label style="color: #ffd700;">Nome do Fornecedor</label><input type="text" name="name" value="${supplier?.name || ''}" required placeholder="Nome do fornecedor" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Categoria</label><select name="category" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>Buffet</option><option>Fotografia</option><option>Música</option><option>Decoração</option><option>Espaço</option><option>Vestuário</option><option>Outro</option></select></div>
+            <div class="form-group"><label style="color: #ffd700;">Status</label><select name="status" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>cotado</option><option>negociacao</option><option>contratado</option></select></div>
+            <div class="form-group"><label style="color: #ffd700;">Valor (R$)</label><input type="number" name="value" value="${supplier?.value || 0}" placeholder="0,00" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Contato</label><input type="text" name="contact" value="${supplier?.contact || ''}" placeholder="Telefone ou email" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeSupplierModal()" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Cancelar</button></div>
         </form></div></div>`;
 }
 
 function renderTaskForm() {
     const task = state.editingTask;
-    return `<div class="modal" id="taskModal"><div class="modal-content"><h2>${task ? 'Editar Tarefa' : 'Nova Tarefa'}</h2>
+    return `<div class="modal" id="taskModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;"><div class="modal-content" style="background: #1a1a1a; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; border: 1px solid #ffd700;"><h2 style="color: #ffd700;">${task ? 'Editar Tarefa' : 'Nova Tarefa'}</h2>
         <form id="taskForm">
-            <div class="form-group"><label>Nome da Tarefa</label><input type="text" name="name" value="${task?.name || ''}" required placeholder="Ex: Contratar buffet"></div>
-            <div class="form-group"><label>Categoria</label><select name="category"><option>12 meses</option><option>9 meses</option><option>6 meses</option><option>3 meses</option><option>1 mês</option><option>1 semana</option><option>Dia do Casamento</option></select></div>
-            <div class="form-group"><label>Prioridade</label><select name="priority"><option>baixa</option><option>media</option><option>alta</option></select></div>
-            <div class="form-group"><label>Data Limite</label><input type="date" name="due_date" value="${task?.due_date || ''}"></div>
-            <div style="display:flex; gap:1rem;"><button type="submit" class="btn">Salvar</button><button type="button" class="btn-secondary" onclick="closeTaskModal()">Cancelar</button></div>
+            <div class="form-group"><label style="color: #ffd700;">Nome da Tarefa</label><input type="text" name="name" value="${task?.name || ''}" required placeholder="Ex: Contratar buffet" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div class="form-group"><label style="color: #ffd700;">Categoria</label><select name="category" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>12 meses</option><option>9 meses</option><option>6 meses</option><option>3 meses</option><option>1 mês</option><option>1 semana</option><option>Dia do Casamento</option></select></div>
+            <div class="form-group"><label style="color: #ffd700;">Prioridade</label><select name="priority" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>baixa</option><option>media</option><option>alta</option></select></div>
+            <div class="form-group"><label style="color: #ffd700;">Data Limite</label><input type="date" name="due_date" value="${task?.due_date || ''}" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
+            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeTaskModal()" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Cancelar</button></div>
         </form></div></div>`;
 }
 
 // ============================================
-// FUNÇÕES DE RECUPERAÇÃO DE SENHA
+// HANDLERS DOS FORMULÁRIOS
 // ============================================
 
-function showForgotPassword() {
-    document.getElementById('app').innerHTML = `
-        <div class="auth-container">
-            <div class="auth-box">
-                <div class="auth-logo">
-                    <h1>LA VIE</h1>
-                    <div class="subtitle">CASAMENTOS</div>
-                    <div class="tagline">Recuperar acesso</div>
-                </div>
-                <div class="auth-card">
-                    <h2 style="color:#ffd700; text-align:center; margin-bottom:1rem;">Esqueceu a senha?</h2>
-                    <p style="color:#888; text-align:center; margin-bottom:1.5rem; font-size:0.8rem;">
-                        Digite seu email e enviaremos um link para redefinir sua senha.
-                    </p>
-                    <div id="forgotMessage" class="error-message" style="display:none"></div>
-                    <form id="forgotForm" class="auth-form">
-                        <div class="form-group"><label>EMAIL CADASTRADO</label><input type="email" id="forgotEmail" placeholder="seuemail@exemplo.com" required></div>
-                        <button type="submit" class="auth-btn">ENVIAR LINK DE RECUPERAÇÃO</button>
-                        <div class="back-to-login">
-                            <a onclick="renderAuth()">← Voltar para o login</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
+function attachFormEvents() {
+    const eventForm = document.getElementById('eventForm');
+    if (eventForm) eventForm.addEventListener('submit', handleEventSubmit);
+    
+    const guestForm = document.getElementById('guestForm');
+    if (guestForm) guestForm.addEventListener('submit', handleGuestSubmit);
+    
+    const supplierForm = document.getElementById('supplierForm');
+    if (supplierForm) supplierForm.addEventListener('submit', handleSupplierSubmit);
+    
+    const taskForm = document.getElementById('taskForm');
+    if (taskForm) taskForm.addEventListener('submit', handleTaskSubmit);
+    
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.removeEventListener('submit', handleProfileSubmit);
+        profileForm.addEventListener('submit', handleProfileSubmit);
+    }
+    
+    const changePhotoBtn = document.getElementById('changePhotoBtn');
+    if (changePhotoBtn) {
+        changePhotoBtn.removeEventListener('click', () => {});
+        changePhotoBtn.addEventListener('click', () => {
+            const photoUpload = document.getElementById('photoUpload');
+            if (photoUpload) photoUpload.click();
+        });
+    }
+    
+    const photoUpload = document.getElementById('photoUpload');
+    if (photoUpload) {
+        photoUpload.removeEventListener('change', handlePhotoUpload);
+        photoUpload.addEventListener('change', handlePhotoUpload);
+    }
+}
 
-    document.getElementById('forgotForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('forgotEmail').value;
-        const msgDiv = document.getElementById('forgotMessage');
-        
-        const usuario = Object.values(USUARIOS).find(u => u.email === email);
-        
-        if (usuario) {
-            const resetToken = Math.random().toString(36).substring(2, 15);
-            localStorage.setItem(`reset_${email}`, resetToken);
-            
-            msgDiv.style.display = 'block';
-            msgDiv.className = 'success-message';
-            msgDiv.innerHTML = `Link de recuperação enviado para ${email}!<br><small>Token: ${resetToken}</small><br><br>`;
-            
-            const buttonDiv = document.createElement('div');
-            buttonDiv.style.marginTop = '1rem';
-            buttonDiv.innerHTML = `<button class="auth-btn" onclick="showResetPassword('${email}', '${resetToken}')">REDEFINIR SENHA</button>`;
-            msgDiv.appendChild(buttonDiv);
+async function handleEventSubmit(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    data.budget_total = parseFloat(data.budget_total || 0);
+    
+    let result;
+    if (state.editingEvent) {
+        result = await updateEvent(state.editingEvent.id, data);
+    } else {
+        result = await createEvent(data, state.user.id);
+    }
+    
+    if (result.success) {
+        state.events = await getUserEvents(state.user.id);
+        closeEventModal();
+        showNotification('Evento salvo com sucesso!', 'success');
+        renderDashboard();
+    } else {
+        showNotification('Erro ao salvar evento: ' + result.error, 'error');
+    }
+}
+
+async function handleGuestSubmit(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    data.event_id = state.selectedEvent;
+    
+    let result;
+    if (state.editingGuest) {
+        result = await updateGuest(state.editingGuest.id, data);
+    } else {
+        result = await createGuest(data, state.selectedEvent);
+    }
+    
+    if (result.success) {
+        state.guests = await getEventGuests(state.selectedEvent);
+        closeGuestModal();
+        showNotification('Convidado salvo com sucesso!', 'success');
+        renderDashboard();
+    } else {
+        showNotification('Erro ao salvar convidado: ' + result.error, 'error');
+    }
+}
+
+async function handleSupplierSubmit(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    data.event_id = state.selectedEvent;
+    data.value = parseFloat(data.value || 0);
+    
+    let result;
+    if (state.editingSupplier) {
+        result = await updateSupplier(state.editingSupplier.id, data);
+    } else {
+        result = await createSupplier(data, state.selectedEvent);
+    }
+    
+    if (result.success) {
+        state.suppliers = await getEventSuppliers(state.selectedEvent);
+        closeSupplierModal();
+        showNotification('Fornecedor salvo com sucesso!', 'success');
+        renderDashboard();
+    } else {
+        showNotification('Erro ao salvar fornecedor: ' + result.error, 'error');
+    }
+}
+
+async function handleTaskSubmit(e) {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    
+    let result;
+    if (state.editingTask) {
+        result = await updateTask(state.editingTask.id, data);
+    } else {
+        result = await createTask(data, state.user.id, state.selectedEvent || null);
+    }
+    
+    if (result.success) {
+        if (state.selectedEvent) {
+            state.tasks = await getUserTasks(state.user.id, state.selectedEvent);
         } else {
-            msgDiv.style.display = 'block';
-            msgDiv.className = 'error-message';
-            msgDiv.textContent = 'Email não encontrado! Verifique se você está cadastrado.';
+            state.tasks = await getUserTasks(state.user.id);
         }
-    });
+        closeTaskModal();
+        showNotification('Tarefa salva com sucesso!', 'success');
+        renderDashboard();
+    } else {
+        showNotification('Erro ao salvar tarefa: ' + result.error, 'error');
+    }
 }
 
-function showResetPassword(email, token) {
-    document.getElementById('app').innerHTML = `
-        <div class="auth-container">
-            <div class="auth-box">
-                <div class="auth-logo">
-                    <h1>LA VIE</h1>
-                    <div class="subtitle">CASAMENTOS</div>
-                    <div class="tagline">Redefinir senha</div>
-                </div>
-                <div class="auth-card">
-                    <h2 style="color:#ffd700; text-align:center; margin-bottom:1rem;">Redefinir senha</h2>
-                    <p style="color:#888; text-align:center; margin-bottom:1.5rem; font-size:0.8rem;">
-                        Digite sua nova senha para o email: <strong style="color:#ffd700;">${email}</strong>
-                    </p>
-                    <div id="resetMessage" class="error-message" style="display:none"></div>
-                    <form id="resetForm" class="auth-form">
-                        <div class="form-group"><label>NOVA SENHA</label><input type="password" id="newPassword" placeholder="Mínimo 4 caracteres" required></div>
-                        <div class="form-group"><label>CONFIRMAR NOVA SENHA</label><input type="password" id="confirmNewPassword" placeholder="Digite novamente" required></div>
-                        <button type="submit" class="auth-btn">SALVAR NOVA SENHA</button>
-                        <div class="back-to-login">
-                            <a onclick="renderAuth()">← Voltar para o login</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
+async function handleProfileSubmit(e) {
+    e.preventDefault();
+    const profileData = Object.fromEntries(new FormData(e.target));
+    const result = await updateUserProfile(state.user.id, profileData);
+    
+    if (result.success) {
+        const userData = await getUserProfile(state.user.id);
+        state.user.profile = userData?.profile || {};
+        showNotification('Perfil atualizado com sucesso!', 'success');
+        renderDashboard();
+    } else {
+        showNotification('Erro ao atualizar perfil: ' + result.error, 'error');
+    }
+}
 
-    document.getElementById('resetForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmNewPassword').value;
-        const msgDiv = document.getElementById('resetMessage');
-        
-        if (newPassword !== confirmPassword) {
-            msgDiv.style.display = 'block';
-            msgDiv.className = 'error-message';
-            msgDiv.textContent = 'As senhas não coincidem!';
-            return;
-        }
-        
-        if (newPassword.length < 4) {
-            msgDiv.style.display = 'block';
-            msgDiv.className = 'error-message';
-            msgDiv.textContent = 'A senha deve ter pelo menos 4 caracteres!';
-            return;
-        }
-        
-        const usuario = Object.values(USUARIOS).find(u => u.email === email);
-        if (usuario) {
-            const username = usuario.username;
-            USUARIOS[username].password = newPassword;
-            salvarDados();
-            
-            msgDiv.style.display = 'block';
-            msgDiv.className = 'success-message';
-            msgDiv.innerHTML = 'Senha alterada com sucesso! Redirecionando para o login...';
-            
-            localStorage.removeItem(`reset_${email}`);
-            
-            setTimeout(() => {
-                state.authMode = 'login';
-                renderAuth();
-            }, 2000);
-        }
-    });
+async function handlePhotoUpload(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const result = await updateUserProfile(state.user.id, { photo: event.target.result });
+            if (result.success) {
+                const userData = await getUserProfile(state.user.id);
+                state.user.profile = userData?.profile || {};
+                showNotification('Foto atualizada!', 'success');
+                renderDashboard();
+            }
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
 // ============================================
-// TELA DE LOGIN
+// FUNÇÕES DE AUTENTICAÇÃO (TELA DE LOGIN)
 // ============================================
 
 function renderAuth() {
     const isLogin = state.authMode === 'login';
+    
     document.getElementById('app').innerHTML = `
-        <div class="auth-container">
-            <div class="auth-box">
-                <div class="auth-logo">
-                    <h1>LA VIE</h1>
-                    <div class="subtitle">CASAMENTOS</div>
-                    <div class="tagline">Seu sonho feito por especialistas</div>
+        <div class="auth-container" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0a0a0a, #1a1a1a);">
+            <div class="auth-box" style="width: 100%; max-width: 420px; margin: 1rem;">
+                <div class="auth-logo" style="text-align: center; margin-bottom: 2rem;">
+                    <h1 style="font-size: 3rem; font-weight: 300; letter-spacing: 8px; background: linear-gradient(135deg, #ffd700, #ffb347); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">LA VIE</h1>
+                    <div class="subtitle" style="font-size: 0.7rem; letter-spacing: 4px; color: #ffd700;">CASAMENTOS</div>
+                    <div class="tagline" style="font-size: 0.8rem; color: #888; margin-top: 0.5rem;">Seu sonho feito por especialistas</div>
                 </div>
-                <div class="auth-card">
-                    <div class="auth-tabs">
-                        <button class="auth-tab ${isLogin ? 'active' : ''}" onclick="setAuthMode('login')">Login</button>
-                        <button class="auth-tab ${!isLogin ? 'active' : ''}" onclick="setAuthMode('register')">Cadastrar</button>
+                <div class="auth-card" style="background: rgba(26,26,26,0.95); backdrop-filter: blur(10px); border-radius: 16px; padding: 2rem; border: 1px solid rgba(255,215,0,0.3);">
+                    <div class="auth-tabs" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,215,0,0.3);">
+                        <button class="auth-tab ${isLogin ? 'active' : ''}" onclick="window.setAuthMode('login')" style="flex: 1; text-align: center; padding: 0.75rem; background: none; border: none; color: ${isLogin ? '#ffd700' : '#888'}; font-size: 1rem; font-weight: 600; cursor: pointer; border-bottom: ${isLogin ? '2px solid #ffd700' : 'none'};">Login</button>
+                        <button class="auth-tab ${!isLogin ? 'active' : ''}" onclick="window.setAuthMode('register')" style="flex: 1; text-align: center; padding: 0.75rem; background: none; border: none; color: ${!isLogin ? '#ffd700' : '#888'}; font-size: 1rem; font-weight: 600; cursor: pointer; border-bottom: ${!isLogin ? '2px solid #ffd700' : 'none'};">Cadastrar</button>
                     </div>
                     <div id="authMessage" class="error-message" style="display:none"></div>
+                    
                     ${isLogin ? `
+                        <button id="googleLoginBtn" class="auth-btn google-btn" style="width: 100%; padding: 0.75rem; background: #4285f4; border: none; border-radius: 8px; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                            <svg style="width:20px;height:20px;" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                            Entrar com Google
+                        </button>
+                        <div class="divider" style="display: flex; align-items: center; text-align: center; margin: 1rem 0; color: #888;"><span style="flex: 1; border-bottom: 1px solid rgba(255,215,0,0.3);"></span><span style="margin: 0 10px;">ou</span><span style="flex: 1; border-bottom: 1px solid rgba(255,215,0,0.3);"></span></div>
                         <form id="loginForm" class="auth-form">
-                            <div class="form-group"><label>USUÁRIO</label><input type="text" id="loginUsername" placeholder="Digite seu usuário" required></div>
-                            <div class="form-group"><label>SENHA</label><input type="password" id="loginPassword" placeholder="Digite sua senha" required></div>
-                            <button type="submit" class="auth-btn">ENTRAR</button>
-                            <div class="forgot-password-link">
-                                <a onclick="showForgotPassword()">Esqueceu sua senha?</a>
+                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">EMAIL</label><input type="email" id="loginEmail" placeholder="seuemail@exemplo.com" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
+                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">SENHA</label><input type="password" id="loginPassword" placeholder="Digite sua senha" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
+                            <button type="submit" class="auth-btn" style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #ffd700, #ffb347); border: none; border-radius: 8px; color: #1a1a1a; font-size: 1rem; font-weight: bold; cursor: pointer;">ENTRAR</button>
+                            <div style="text-align: center; margin-top: 1rem;">
+                                <a onclick="window.forgotPassword()" style="color: #ffd700; cursor: pointer; font-size: 0.8rem;">Esqueceu sua senha?</a>
+                            </div>
+                            <div style="text-align: center; margin-top: 0.5rem;">
+                                <a onclick="window.resendVerification()" style="color: #888; cursor: pointer; font-size: 0.7rem;">Não recebeu o email de verificação?</a>
                             </div>
                         </form>
                     ` : `
                         <form id="registerForm" class="auth-form">
-                            <div class="form-group"><label>USUÁRIO</label><input type="text" id="regUsername" placeholder="Escolha um usuário" required></div>
-                            <div class="form-group"><label>EMAIL</label><input type="email" id="regEmail" placeholder="Seu melhor email" required></div>
-                            <div class="form-group"><label>SENHA</label><input type="password" id="regPassword" placeholder="Mínimo 4 caracteres" required></div>
-                            <div class="form-group"><label>CONFIRMAR SENHA</label><input type="password" id="regConfirmPassword" placeholder="Digite novamente" required></div>
-                            <button type="submit" class="auth-btn">CADASTRAR</button>
+                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">NOME DE USUÁRIO</label><input type="text" id="regUsername" placeholder="Como quer ser chamado" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
+                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">EMAIL</label><input type="email" id="regEmail" placeholder="seuemail@exemplo.com" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
+                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">SENHA</label><input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
+                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">CONFIRMAR SENHA</label><input type="password" id="regConfirmPassword" placeholder="Digite novamente" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
+                            <button type="submit" class="auth-btn" style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #ffd700, #ffb347); border: none; border-radius: 8px; color: #1a1a1a; font-size: 1rem; font-weight: bold; cursor: pointer;">CADASTRAR</button>
                         </form>
                     `}
                 </div>
@@ -944,102 +956,193 @@ function renderAuth() {
     `;
 
     if (isLogin) {
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
+        const googleBtn = document.getElementById('googleLoginBtn');
+        if (googleBtn) {
+            googleBtn.addEventListener('click', async () => {
+                const result = await loginWithGoogle();
+                if (result.success) {
+                    await loadUserData(result.user);
+                } else {
+                    const msgDiv = document.getElementById('authMessage');
+                    msgDiv.style.display = 'block';
+                    msgDiv.textContent = result.error;
+                }
+            });
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = document.getElementById('loginUsername').value;
+            const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
-            if (login(username, password)) renderDashboard();
-            else { const msg = document.getElementById('authMessage'); msg.style.display = 'block'; msg.textContent = 'Usuário ou senha inválidos!'; }
+            const result = await loginWithEmail(email, password);
+            
+            if (result.success) {
+                await loadUserData(result.user);
+            } else {
+                const msgDiv = document.getElementById('authMessage');
+                msgDiv.style.display = 'block';
+                if (result.error === 'email-not-verified') {
+                    msgDiv.innerHTML = result.message + '<br><br><a onclick="window.resendVerification()" style="color: #ffd700; cursor: pointer;">Clique aqui para reenviar o link de verificação</a>';
+                } else {
+                    msgDiv.textContent = result.error;
+                }
+            }
         });
     } else {
-        document.getElementById('registerForm').addEventListener('submit', (e) => {
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('regUsername').value;
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
             const confirm = document.getElementById('regConfirmPassword').value;
-            const msg = document.getElementById('authMessage');
-            if (password !== confirm) { msg.style.display = 'block'; msg.textContent = 'Senhas não coincidem!'; return; }
-            if (password.length < 4) { msg.style.display = 'block'; msg.textContent = 'Mínimo 4 caracteres!'; return; }
-            const result = register(username, password, email);
+            const msgDiv = document.getElementById('authMessage');
+            
+            if (password !== confirm) {
+                msgDiv.style.display = 'block';
+                msgDiv.textContent = 'Senhas não coincidem!';
+                return;
+            }
+            if (password.length < 6) {
+                msgDiv.style.display = 'block';
+                msgDiv.textContent = 'A senha deve ter pelo menos 6 caracteres!';
+                return;
+            }
+            
+            const result = await registerWithEmail(email, password, username);
+            
             if (result.success) {
-                msg.style.display = 'block'; msg.className = 'success-message'; msg.textContent = 'Cadastro realizado! Faça login.';
-                setTimeout(() => { state.authMode = 'login'; renderAuth(); }, 2000);
-            } else { msg.style.display = 'block'; msg.textContent = result.error; }
+                msgDiv.style.display = 'block';
+                msgDiv.className = 'success-message';
+                msgDiv.innerHTML = result.message + '<br><br>Enviamos um link de verificação para <strong>' + email + '</strong><br>Verifique seu email (e a pasta SPAM) antes de fazer login.';
+                setTimeout(() => {
+                    state.authMode = 'login';
+                    renderAuth();
+                }, 5000);
+            } else {
+                msgDiv.style.display = 'block';
+                msgDiv.textContent = result.error;
+            }
         });
     }
 }
 
 // ============================================
-// HANDLERS
+// VERIFICAR SESSÃO AO CARREGAR A PÁGINA
 // ============================================
 
-async function handleEventSubmit(e) {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target));
-    data.budget_total = parseFloat(data.budget_total || 0);
-    (state.editingEvent ? updateEvent(state.editingEvent.id, data) : createEvent(data)) ? (closeEventModal(), renderDashboard()) : alert('Erro ao salvar evento');
+async function checkAuthState() {
+    return new Promise((resolve) => {
+        onAuthChange(async (user) => {
+            if (user) {
+                console.log('Usuário encontrado na sessão:', user.email);
+                state.user = user;
+                state.events = await getUserEvents(state.user.id);
+                state.tasks = await getUserTasks(state.user.id);
+                renderDashboard();
+                resolve(true);
+            } else {
+                console.log('Nenhum usuário logado');
+                renderAuth();
+                resolve(false);
+            }
+        });
+    });
 }
 
-async function handleGuestSubmit(e) {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target));
-    data.event_id = state.selectedEvent;
-    (state.editingGuest ? updateGuest(state.editingGuest.id, data) : createGuest(data)) ? (closeGuestModal(), renderDashboard()) : alert('Erro ao salvar convidado');
-}
-
-async function handleSupplierSubmit(e) {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target));
-    data.event_id = state.selectedEvent;
-    data.value = parseFloat(data.value || 0);
-    (state.editingSupplier ? updateSupplier(state.editingSupplier.id, data) : createSupplier(data)) ? (closeSupplierModal(), renderDashboard()) : alert('Erro ao salvar fornecedor');
-}
-
-async function handleTaskSubmit(e) {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target));
-    if (state.editingTask) updateTask(state.editingTask.id, data);
-    else createTask({ ...data, event_id: state.selectedEvent || null });
-    closeTaskModal();
+async function loadUserData(user) {
+    state.user = user;
+    state.events = await getUserEvents(state.user.id);
+    if (state.selectedEvent) {
+        state.guests = await getEventGuests(state.selectedEvent);
+        state.suppliers = await getEventSuppliers(state.selectedEvent);
+        state.tasks = await getUserTasks(state.user.id, state.selectedEvent);
+    } else {
+        state.tasks = await getUserTasks(state.user.id);
+    }
     renderDashboard();
 }
 
 // ============================================
-// FUNÇÕES GLOBAIS
+// FUNÇÃO PARA MARCAR TAREFA COMO CONCLUÍDA
+// ============================================
+
+window.completeTask = async function(id) {
+    await toggleTaskComplete(id);
+    if (state.selectedEvent) {
+        state.tasks = await getUserTasks(state.user.id, state.selectedEvent);
+    } else {
+        state.tasks = await getUserTasks(state.user.id);
+    }
+    renderDashboard();
+    showNotification('Tarefa concluída! Parabéns!', 'success');
+};
+
+// ============================================
+// FUNÇÕES DE LOGOUT
+// ============================================
+
+async function logout() {
+    await logoutUser();
+    state.user = null;
+    state.events = [];
+    state.selectedEvent = null;
+    state.guests = [];
+    state.suppliers = [];
+    state.tasks = [];
+    Object.values(state.charts).forEach(c => c?.destroy());
+    renderAuth();
+}
+
+// ============================================
+// FUNÇÕES GLOBAIS EXPORTADAS
 // ============================================
 
 window.setAuthMode = (m) => { state.authMode = m; renderAuth(); };
 window.setActiveTab = (tab) => { state.activeTab = tab; renderDashboard(); };
 window.setTaskFilter = (filter) => { state.taskFilter = filter; renderDashboard(); };
-window.selectEvent = (id) => { state.selectedEvent = id; loadEventData(id); renderDashboard(); };
-window.mudarMes = (d) => { const nd = new Date(state.calendarYear, state.calendarMonth + d, 1); state.calendarYear = nd.getFullYear(); state.calendarMonth = nd.getMonth(); renderDashboard(); };
-window.selecionarDataCalendario = (dataISO) => {
-    const data = new Date(dataISO);
-    const evento = state.events.find(e => new Date(e.event_date).toDateString() === data.toDateString());
-    if (evento) { state.selectedEvent = evento.id; loadEventData(evento.id); setActiveTab('dashboard'); }
-    else alert(`Nenhum evento em ${data.toLocaleDateString('pt-BR')}`);
+window.selectEvent = async (id) => { 
+    state.selectedEvent = id; 
+    if (id) {
+        await loadEventData(id);
+    }
+    renderDashboard(); 
 };
-window.toggleTaskComplete = (id) => { toggleTaskComplete(id); renderDashboard(); };
-window.showForgotPassword = showForgotPassword;
-window.showResetPassword = showResetPassword;
+window.mudarMes = (d) => { 
+    const nd = new Date(state.calendarYear, state.calendarMonth + d, 1); 
+    state.calendarYear = nd.getFullYear(); 
+    state.calendarMonth = nd.getMonth(); 
+    renderDashboard(); 
+};
+window.toggleTaskComplete = async (id) => { 
+    await toggleTaskComplete(id);
+    if (state.selectedEvent) {
+        state.tasks = await getUserTasks(state.user.id, state.selectedEvent);
+    } else {
+        state.tasks = await getUserTasks(state.user.id);
+    }
+    renderDashboard(); 
+};
 window.openEventModal = () => { state.editingEvent = null; state.showEventForm = true; renderDashboard(); };
 window.editEvent = (id) => { state.editingEvent = state.events.find(e => e.id === id); state.showEventForm = true; renderDashboard(); };
 window.closeEventModal = () => { state.showEventForm = false; state.editingEvent = null; renderDashboard(); };
-window.deleteEventConfirm = (id) => { if (confirm('Excluir evento?')) deleteEvent(id) && renderDashboard(); };
+window.deleteEventConfirm = async (id) => { if (confirm('Excluir evento?')) { await deleteEvent(id); state.events = await getUserEvents(state.user.id); if (state.selectedEvent === id) state.selectedEvent = null; renderDashboard(); } };
 window.openGuestModal = () => { if (!state.selectedEvent) { alert('Selecione um evento primeiro!'); return; } state.editingGuest = null; state.showGuestForm = true; renderDashboard(); };
 window.editGuest = (id) => { state.editingGuest = state.guests.find(g => g.id === id); state.showGuestForm = true; renderDashboard(); };
 window.closeGuestModal = () => { state.showGuestForm = false; state.editingGuest = null; renderDashboard(); };
-window.deleteGuestConfirm = (id) => { if (confirm('Excluir convidado?')) deleteGuest(id) && renderDashboard(); };
+window.deleteGuestConfirm = async (id) => { if (confirm('Excluir convidado?')) { await deleteGuest(id); state.guests = await getEventGuests(state.selectedEvent); renderDashboard(); } };
 window.openSupplierModal = () => { if (!state.selectedEvent) { alert('Selecione um evento primeiro!'); return; } state.editingSupplier = null; state.showSupplierForm = true; renderDashboard(); };
 window.editSupplier = (id) => { state.editingSupplier = state.suppliers.find(s => s.id === id); state.showSupplierForm = true; renderDashboard(); };
 window.closeSupplierModal = () => { state.showSupplierForm = false; state.editingSupplier = null; renderDashboard(); };
-window.deleteSupplierConfirm = (id) => { if (confirm('Excluir fornecedor?')) deleteSupplier(id) && renderDashboard(); };
+window.deleteSupplierConfirm = async (id) => { if (confirm('Excluir fornecedor?')) { await deleteSupplier(id); state.suppliers = await getEventSuppliers(state.selectedEvent); renderDashboard(); } };
 window.openTaskModal = () => { state.editingTask = null; state.showTaskForm = true; renderDashboard(); };
 window.editTask = (id) => { state.editingTask = state.tasks.find(t => t.id === id); state.showTaskForm = true; renderDashboard(); };
 window.closeTaskModal = () => { state.showTaskForm = false; state.editingTask = null; renderDashboard(); };
-window.deleteTaskConfirm = (id) => { if (confirm('Excluir tarefa?')) deleteTask(id) && renderDashboard(); };
+window.deleteTaskConfirm = async (id) => { if (confirm('Excluir tarefa?')) { await deleteTask(id); if (state.selectedEvent) { state.tasks = await getUserTasks(state.user.id, state.selectedEvent); } else { state.tasks = await getUserTasks(state.user.id); } renderDashboard(); } };
 window.logout = logout;
 
-function init() { renderAuth(); }
-init();
+// ============================================
+// INICIALIZAÇÃO
+// ============================================
+
+loadSavedTheme();
+checkAuthState();

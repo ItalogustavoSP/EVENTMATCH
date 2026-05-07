@@ -969,3 +969,361 @@ body {
         font-size: 2.5rem;
     }
 }
+/* ============================================
+   BOTÃO FLUTUANTE DE TEMAS
+   ============================================ */
+.theme-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s;
+}
+
+.theme-toggle-btn:hover {
+    transform: scale(1.1);
+}
+
+.theme-icon {
+    font-size: 24px;
+}
+
+/* Menu de temas */
+.theme-menu {
+    position: fixed;
+    bottom: 80px;
+    left: 20px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 1rem;
+    min-width: 200px;
+    z-index: 1001;
+    border: 1px solid #ffd700;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.theme-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.5rem;
+}
+
+.theme-menu-header h3 {
+    color: #ffd700;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.close-theme-btn {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.close-theme-btn:hover {
+    color: #ffd700;
+}
+
+.theme-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.theme-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #fff;
+}
+
+.theme-option:hover {
+    background: #333;
+}
+
+.theme-preview {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+}
+
+/* Cores dos previews */
+.gold-preview { background: linear-gradient(135deg, #ffd700, #ffb347); }
+.rose-preview { background: linear-gradient(135deg, #ff69b4, #ff1493); }
+.blue-preview { background: linear-gradient(135deg, #00bfff, #1e90ff); }
+.green-preview { background: linear-gradient(135deg, #32cd32, #228b22); }
+.purple-preview { background: linear-gradient(135deg, #9370db, #8a2be2); }
+.dark-preview { background: linear-gradient(135deg, #2c3e50, #1a1a2e); }
+
+/* ========== TEMA ROSA ========== */
+body.theme-rose {
+    background: linear-gradient(135deg, #1a0a15, #2a1525);
+}
+.theme-rose .header {
+    background: linear-gradient(135deg, #2a1525, #1a0a15);
+    border-bottom-color: #ff69b4;
+}
+.theme-rose .tab.active {
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+}
+.theme-rose .tab:hover {
+    border-color: #ff69b4;
+    color: #ff69b4;
+}
+.theme-rose .stat-card, .theme-rose .budget-card, .theme-rose .chart-card,
+.theme-rose .checklist-section, .theme-rose .calendar-section, .theme-rose .profile-section,
+.theme-rose .guest-card, .theme-rose .supplier-card, .theme-rose .event-card {
+    border-color: #ff69b4;
+}
+.theme-rose .stat-card:hover, .theme-rose .event-card:hover {
+    border-color: #ff69b4;
+    box-shadow: 0 10px 20px rgba(255, 105, 180, 0.2);
+}
+.theme-rose .budget-card.used {
+    border-left-color: #ff69b4;
+}
+.theme-rose .budget-card.used .budget-value {
+    color: #ff69b4;
+}
+.theme-rose .progress-fill {
+    background: linear-gradient(90deg, #ff69b4, #ff1493);
+}
+.theme-rose .calendar-day.has-event {
+    background: #ff69b4;
+}
+.theme-rose .category-title {
+    border-left-color: #ff69b4;
+    color: #ff69b4;
+}
+.theme-rose .filter-btn.active, .theme-rose .filter-btn:hover {
+    background: #ff69b4;
+    color: #1a1a1a;
+}
+.theme-rose .theme-toggle-btn {
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+}
+
+/* ========== TEMA AZUL ========== */
+body.theme-blue {
+    background: linear-gradient(135deg, #0a1a2a, #0f2a3a);
+}
+.theme-blue .header {
+    background: linear-gradient(135deg, #0f2a3a, #0a1a2a);
+    border-bottom-color: #00bfff;
+}
+.theme-blue .tab.active {
+    background: linear-gradient(135deg, #00bfff, #1e90ff);
+}
+.theme-blue .tab:hover {
+    border-color: #00bfff;
+    color: #00bfff;
+}
+.theme-blue .stat-card, .theme-blue .budget-card, .theme-blue .chart-card,
+.theme-blue .checklist-section, .theme-blue .calendar-section, .theme-blue .profile-section,
+.theme-blue .guest-card, .theme-blue .supplier-card, .theme-blue .event-card {
+    border-color: #00bfff;
+}
+.theme-blue .stat-card:hover, .theme-blue .event-card:hover {
+    border-color: #00bfff;
+    box-shadow: 0 10px 20px rgba(0, 191, 255, 0.2);
+}
+.theme-blue .budget-card.used {
+    border-left-color: #00bfff;
+}
+.theme-blue .budget-card.used .budget-value {
+    color: #00bfff;
+}
+.theme-blue .progress-fill {
+    background: linear-gradient(90deg, #00bfff, #1e90ff);
+}
+.theme-blue .calendar-day.has-event {
+    background: #00bfff;
+}
+.theme-blue .category-title {
+    border-left-color: #00bfff;
+    color: #00bfff;
+}
+.theme-blue .filter-btn.active, .theme-blue .filter-btn:hover {
+    background: #00bfff;
+    color: #1a1a1a;
+}
+.theme-blue .theme-toggle-btn {
+    background: linear-gradient(135deg, #00bfff, #1e90ff);
+}
+
+/* ========== TEMA VERDE ========== */
+body.theme-green {
+    background: linear-gradient(135deg, #0a1a0a, #0f2a15);
+}
+.theme-green .header {
+    background: linear-gradient(135deg, #0f2a15, #0a1a0a);
+    border-bottom-color: #32cd32;
+}
+.theme-green .tab.active {
+    background: linear-gradient(135deg, #32cd32, #228b22);
+}
+.theme-green .tab:hover {
+    border-color: #32cd32;
+    color: #32cd32;
+}
+.theme-green .stat-card, .theme-green .budget-card, .theme-green .chart-card,
+.theme-green .checklist-section, .theme-green .calendar-section, .theme-green .profile-section,
+.theme-green .guest-card, .theme-green .supplier-card, .theme-green .event-card {
+    border-color: #32cd32;
+}
+.theme-green .budget-card.used {
+    border-left-color: #32cd32;
+}
+.theme-green .budget-card.used .budget-value {
+    color: #32cd32;
+}
+.theme-green .progress-fill {
+    background: linear-gradient(90deg, #32cd32, #228b22);
+}
+.theme-green .calendar-day.has-event {
+    background: #32cd32;
+}
+.theme-green .category-title {
+    border-left-color: #32cd32;
+    color: #32cd32;
+}
+.theme-green .filter-btn.active, .theme-green .filter-btn:hover {
+    background: #32cd32;
+    color: #1a1a1a;
+}
+.theme-green .theme-toggle-btn {
+    background: linear-gradient(135deg, #32cd32, #228b22);
+}
+
+/* ========== TEMA ROXO ========== */
+body.theme-purple {
+    background: linear-gradient(135deg, #1a0a2a, #251a3a);
+}
+.theme-purple .header {
+    background: linear-gradient(135deg, #251a3a, #1a0a2a);
+    border-bottom-color: #9370db;
+}
+.theme-purple .tab.active {
+    background: linear-gradient(135deg, #9370db, #8a2be2);
+}
+.theme-purple .tab:hover {
+    border-color: #9370db;
+    color: #9370db;
+}
+.theme-purple .stat-card, .theme-purple .budget-card, .theme-purple .chart-card,
+.theme-purple .checklist-section, .theme-purple .calendar-section, .theme-purple .profile-section,
+.theme-purple .guest-card, .theme-purple .supplier-card, .theme-purple .event-card {
+    border-color: #9370db;
+}
+.theme-purple .budget-card.used {
+    border-left-color: #9370db;
+}
+.theme-purple .budget-card.used .budget-value {
+    color: #9370db;
+}
+.theme-purple .progress-fill {
+    background: linear-gradient(90deg, #9370db, #8a2be2);
+}
+.theme-purple .calendar-day.has-event {
+    background: #9370db;
+}
+.theme-purple .category-title {
+    border-left-color: #9370db;
+    color: #9370db;
+}
+.theme-purple .filter-btn.active, .theme-purple .filter-btn:hover {
+    background: #9370db;
+    color: #1a1a1a;
+}
+.theme-purple .theme-toggle-btn {
+    background: linear-gradient(135deg, #9370db, #8a2be2);
+}
+
+/* ========== TEMA DARK ========== */
+body.theme-dark {
+    background: linear-gradient(135deg, #050505, #0a0a0a);
+}
+.theme-dark .header {
+    background: linear-gradient(135deg, #0a0a0a, #050505);
+    border-bottom-color: #444;
+}
+.theme-dark .tab.active {
+    background: linear-gradient(135deg, #555, #333);
+    color: #fff;
+}
+.theme-dark .stat-card, .theme-dark .budget-card, .theme-dark .chart-card,
+.theme-dark .checklist-section, .theme-dark .calendar-section, .theme-dark .profile-section,
+.theme-dark .guest-card, .theme-dark .supplier-card, .theme-dark .event-card {
+    background: #0a0a0a;
+    border-color: #333;
+}
+.theme-dark .budget-card.used .budget-value {
+    color: #888;
+}
+.theme-dark .progress-fill {
+    background: linear-gradient(90deg, #555, #333);
+}
+.theme-dark .filter-btn.active, .theme-dark .filter-btn:hover {
+    background: #555;
+    color: #fff;
+}
+.theme-dark .theme-toggle-btn {
+    background: linear-gradient(135deg, #555, #333);
+}
+.btn-small {
+    transition: all 0.3s;
+}
+
+.btn-small:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+/* Melhorias para o calendário */
+.calendar-day {
+    transition: all 0.3s;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-day.has-event {
+    background: #ffd700;
+    color: #1a1a1a;
+    font-weight: bold;
+    position: relative;
+}
+
+.calendar-day.has-event:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Melhorias para o perfil */
+.profile-section .btn {
+    margin-top: 1rem;
+}
+
+.profile-form-grid input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
