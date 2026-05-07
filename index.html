@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>La Vie Casamentos - Plataforma de Eventos</title>
     
-    <!-- CSS Externo -->
     <link rel="stylesheet" href="style.css">
     
-    <!-- Import Map para Firebase -->
     <script type="importmap">
         {
             "imports": {
@@ -19,54 +17,50 @@
         }
     </script>
     
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
-    <!-- Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div id="app"></div>
-    <div id="app"></div>
 
-<!-- Botão flutuante de temas -->
-<div class="theme-toggle-btn" onclick="toggleThemeMenu()">
-    <span class="theme-icon">🎨</span>
-</div>
+    <!-- Botão flutuante de temas -->
+    <div class="theme-toggle-btn" onclick="window.toggleThemeMenu()">
+        <span class="theme-icon">🎨</span>
+    </div>
 
-<div id="themeMenu" class="theme-menu" style="display: none;">
-    <div class="theme-menu-header">
-        <h3>Escolha seu Tema</h3>
-        <button onclick="toggleThemeMenu()" class="close-theme-btn">✕</button>
+    <div id="themeMenu" class="theme-menu" style="display: none;">
+        <div class="theme-menu-header">
+            <h3>Escolha seu Tema</h3>
+            <button onclick="window.toggleThemeMenu()" class="close-theme-btn">✕</button>
+        </div>
+        <div class="theme-options">
+            <div class="theme-option" onclick="window.applyTheme('gold')">
+                <div class="theme-preview gold-preview"></div>
+                <span>Dourado</span>
+            </div>
+            <div class="theme-option" onclick="window.applyTheme('rose')">
+                <div class="theme-preview rose-preview"></div>
+                <span>Rosa</span>
+            </div>
+            <div class="theme-option" onclick="window.applyTheme('blue')">
+                <div class="theme-preview blue-preview"></div>
+                <span>Azul</span>
+            </div>
+            <div class="theme-option" onclick="window.applyTheme('green')">
+                <div class="theme-preview green-preview"></div>
+                <span>Verde</span>
+            </div>
+            <div class="theme-option" onclick="window.applyTheme('purple')">
+                <div class="theme-preview purple-preview"></div>
+                <span>Roxo</span>
+            </div>
+            <div class="theme-option" onclick="window.applyTheme('dark')">
+                <div class="theme-preview dark-preview"></div>
+                <span>Dark</span>
+            </div>
+        </div>
     </div>
-    <div class="theme-options">
-        <div class="theme-option" onclick="applyTheme('gold')">
-            <div class="theme-preview gold-preview"></div>
-            <span> Dourado</span>
-        </div>
-        <div class="theme-option" onclick="applyTheme('rose')">
-            <div class="theme-preview rose-preview"></div>
-            <span>Rosa</span>
-        </div>
-        <div class="theme-option" onclick="applyTheme('blue')">
-            <div class="theme-preview blue-preview"></div>
-            <span>Azul</span>
-        </div>
-        <div class="theme-option" onclick="applyTheme('green')">
-            <div class="theme-preview green-preview"></div>
-            <span>Verde</span>
-        </div>
-        <div class="theme-option" onclick="applyTheme('purple')">
-            <div class="theme-preview purple-preview"></div>
-            <span>Roxo</span>
-        </div>
-        <div class="theme-option" onclick="applyTheme('dark')">
-            <div class="theme-preview dark-preview"></div>
-            <span>Dark</span>
-        </div>
-    </div>
-</div>
-    <!-- CARREGAR SCRIPT PRINCIPAL -->
+    
     <script type="module" src="script.js"></script>
 </body>
 </html>

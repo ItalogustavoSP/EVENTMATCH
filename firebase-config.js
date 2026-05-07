@@ -532,17 +532,18 @@ export async function toggleTaskComplete(taskId) {
 export async function updateUserProfile(userId, profileData) {
     try {
         const userRef = doc(db, 'users', userId);
-        await updateDoc(userRef, {
-            'profile.fullName': profileData.fullName || '',
-            'profile.cpf': profileData.cpf || '',
-            'profile.birthDate': profileData.birthDate || '',
-            'profile.address': profileData.address || '',
-            'profile.phone': profileData.phone || ''
-        });
         
-        if (profileData.photo) {
-            await updateDoc(userRef, { 'profile.photo': profileData.photo });
-        }
+        // Atualizar apenas os campos enviados, sem sobrescrever os existentes
+        const updates = {};
+        
+        if (profileData.fullName !== undefined) updates['profile.fullName'] = profileData.fullName;
+        if (profileData.cpf !== undefined) updates['profile.cpf'] = profileData.cpf;
+        if (profileData.birthDate !== undefined) updates['profile.birthDate'] = profileData.birthDate;
+        if (profileData.address !== undefined) updates['profile.address'] = profileData.address;
+        if (profileData.phone !== undefined) updates['profile.phone'] = profileData.phone;
+        if (profileData.photo !== undefined) updates['profile.photo'] = profileData.photo;
+        
+        await updateDoc(userRef, updates);
         
         return { success: true };
     } catch (error) {

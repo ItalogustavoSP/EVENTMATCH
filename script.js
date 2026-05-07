@@ -222,15 +222,19 @@ function formatDate(d) {
 
 function showNotification(message, type) {
     const notification = document.createElement('div');
+    notification.className = 'notification';
     notification.style.position = 'fixed';
     notification.style.bottom = '20px';
     notification.style.right = '20px';
-    notification.style.padding = '1rem';
-    notification.style.borderRadius = '8px';
+    notification.style.padding = '1rem 1.5rem';
+    notification.style.borderRadius = '50px';
     notification.style.backgroundColor = type === 'success' ? '#10b981' : '#e11d48';
     notification.style.color = 'white';
     notification.style.zIndex = '2000';
-    notification.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
+    notification.style.boxShadow = '0 5px 20px rgba(0,0,0,0.3)';
+    notification.style.animation = 'slideIn 0.3s ease';
+    notification.style.fontSize = '0.85rem';
+    notification.style.fontWeight = '500';
     notification.textContent = message;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 3000);
@@ -339,50 +343,50 @@ function renderPerfil() {
     const photoUrl = profile.photo || state.user?.photoURL || '';
 
     return `
-        <div class="profile-section" style="background: #1a1a1a; border-radius: 1rem; padding: 2rem; border: 1px solid #333;">
-            <div class="profile-header" style="display: flex; align-items: center; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;">
-                <div class="profile-avatar" style="text-align: center;">
-                    <div class="profile-avatar-large" id="profileAvatar" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #ffb347); display: flex; align-items: center; justify-content: center; font-size: 2rem; margin-bottom: 0.5rem; overflow: hidden;">
-                        ${photoUrl ? `<img src="${photoUrl}" alt="Foto" style="width: 100%; height: 100%; object-fit: cover;">` : `<span style="color: #1a1a1a;">${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}
+        <div class="profile-section">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <div class="profile-avatar-large" id="profileAvatar">
+                        ${photoUrl ? `<img src="${photoUrl}" alt="Foto de perfil">` : `<span>${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}
                     </div>
                     <input type="file" id="photoUpload" accept="image/*" style="display: none;">
-                    <button class="btn-secondary" id="changePhotoBtn" style="margin-top: 0.5rem;">Alterar Foto</button>
+                    <button class="btn-secondary" id="changePhotoBtn">Alterar Foto</button>
                 </div>
                 <div class="profile-info">
-                    <h2 style="color: #ffd700;">${escapeHtml(profile.fullName || state.user?.username || 'Usuário')}</h2>
-                    <p style="color: #888;">${state.user?.email || ''}</p>
-                    <p style="color: #888;">Membro desde ${new Date().toLocaleDateString('pt-BR')}</p>
+                    <h2>${escapeHtml(profile.fullName || state.user?.username || 'Usuário')}</h2>
+                    <p>${state.user?.email || ''}</p>
+                    <p>Membro desde ${new Date().toLocaleDateString('pt-BR')}</p>
                 </div>
             </div>
 
             <form id="profileForm">
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <div class="profile-form-grid">
                     <div class="form-group">
-                        <label style="color: #ffd700;">Nome Completo</label>
-                        <input type="text" name="fullName" value="${escapeHtml(profile.fullName || '')}" placeholder="Seu nome completo" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                        <label>Nome Completo</label>
+                        <input type="text" name="fullName" value="${escapeHtml(profile.fullName || '')}" placeholder="Seu nome completo">
                     </div>
                     <div class="form-group">
-                        <label style="color: #ffd700;">CPF</label>
-                        <input type="text" name="cpf" value="${escapeHtml(profile.cpf || '')}" placeholder="000.000.000-00" maxlength="14" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                        <label>CPF</label>
+                        <input type="text" name="cpf" value="${escapeHtml(profile.cpf || '')}" placeholder="000.000.000-00" maxlength="14">
                     </div>
                     <div class="form-group">
-                        <label style="color: #ffd700;">Data de Nascimento</label>
-                        <input type="date" name="birthDate" value="${profile.birthDate || ''}" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                        <label>Data de Nascimento</label>
+                        <input type="date" name="birthDate" value="${profile.birthDate || ''}">
                     </div>
                     <div class="form-group">
-                        <label style="color: #ffd700;">Telefone</label>
-                        <input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="(11) 99999-9999" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                        <label>Telefone</label>
+                        <input type="tel" name="phone" value="${escapeHtml(profile.phone || '')}" placeholder="(11) 99999-9999">
                     </div>
                     <div class="form-group" style="grid-column: span 2;">
-                        <label style="color: #ffd700;">Endereço</label>
-                        <input type="text" name="address" value="${escapeHtml(profile.address || '')}" placeholder="Rua, número, bairro, cidade" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;">
+                        <label>Endereço</label>
+                        <input type="text" name="address" value="${escapeHtml(profile.address || '')}" placeholder="Rua, número, bairro, cidade">
                     </div>
                     <div class="form-group">
-                        <label style="color: #ffd700;">Email</label>
-                        <input type="email" value="${state.user?.email || ''}" disabled style="width: 100%; padding: 0.75rem; background: #333; border: 1px solid #333; border-radius: 8px; color: #888;">
+                        <label>Email</label>
+                        <input type="email" value="${state.user?.email || ''}" disabled>
                     </div>
                 </div>
-                <button type="submit" class="btn" style="margin-top: 1.5rem; background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.75rem 1.5rem; border-radius: 10px; cursor: pointer; font-weight: bold;">Salvar Alterações</button>
+                <button type="submit" class="btn">Salvar Alterações</button>
             </form>
         </div>
     `;
@@ -407,20 +411,20 @@ function renderChecklist() {
     const progress = getProgressoChecklist();
 
     return `
-        <div class="checklist-section" style="background: #1a1a1a; border-radius: 1rem; padding: 1.5rem; border: 1px solid #333;">
-            <div class="checklist-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                <h2 style="color: #ffd700;">Checklist do Casamento</h2>
-                <div class="checklist-filters" style="display: flex; gap: 0.5rem;">
-                    <button class="filter-btn ${state.taskFilter === 'all' ? 'active' : ''}" onclick="window.setTaskFilter('all')" style="padding: 0.25rem 0.75rem; border: 1px solid #ffd700; background: ${state.taskFilter === 'all' ? '#ffd700' : 'transparent'}; border-radius: 20px; cursor: pointer; color: ${state.taskFilter === 'all' ? '#1a1a1a' : '#ffd700'};">Todas</button>
-                    <button class="filter-btn ${state.taskFilter === 'pending' ? 'active' : ''}" onclick="window.setTaskFilter('pending')" style="padding: 0.25rem 0.75rem; border: 1px solid #ffd700; background: ${state.taskFilter === 'pending' ? '#ffd700' : 'transparent'}; border-radius: 20px; cursor: pointer; color: ${state.taskFilter === 'pending' ? '#1a1a1a' : '#ffd700'};">Pendentes</button>
-                    <button class="filter-btn ${state.taskFilter === 'completed' ? 'active' : ''}" onclick="window.setTaskFilter('completed')" style="padding: 0.25rem 0.75rem; border: 1px solid #ffd700; background: ${state.taskFilter === 'completed' ? '#ffd700' : 'transparent'}; border-radius: 20px; cursor: pointer; color: ${state.taskFilter === 'completed' ? '#1a1a1a' : '#ffd700'};">Concluídas</button>
-                    <button class="btn" onclick="window.openTaskModal()" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.25rem 0.75rem; border-radius: 20px; cursor: pointer;">Nova Tarefa</button>
+        <div class="checklist-section">
+            <div class="checklist-header">
+                <h2>Checklist do Casamento</h2>
+                <div class="checklist-filters">
+                    <button class="filter-btn ${state.taskFilter === 'all' ? 'active' : ''}" onclick="window.setTaskFilter('all')">Todas</button>
+                    <button class="filter-btn ${state.taskFilter === 'pending' ? 'active' : ''}" onclick="window.setTaskFilter('pending')">Pendentes</button>
+                    <button class="filter-btn ${state.taskFilter === 'completed' ? 'active' : ''}" onclick="window.setTaskFilter('completed')">Concluídas</button>
+                    <button class="btn" onclick="window.openTaskModal()">Nova Tarefa</button>
                 </div>
             </div>
 
-            <div class="progress-section" style="margin-bottom: 1rem;">
-                <h3 style="color: #ffd700;">Progresso: ${progress.toFixed(0)}% concluído</h3>
-                <div class="progress-bar" style="background: #333; border-radius: 10px; height: 20px; overflow: hidden;"><div class="progress-fill" style="background: linear-gradient(90deg, #ffd700, #ffb347); height: 100%; width: ${progress}%; display: flex; align-items: center; justify-content: flex-end; padding-right: 5px; color: #1a1a1a; font-size: 0.7rem;">${progress.toFixed(0)}%</div></div>
+            <div class="progress-section">
+                <h3>Progresso: ${progress.toFixed(0)}% concluído</h3>
+                <div class="progress-bar"><div class="progress-fill" style="width: ${progress}%"></div></div>
             </div>
 
             ${categoryOrder.map(cat => {
@@ -428,28 +432,26 @@ function renderChecklist() {
                 if (tasks.length === 0) return '';
                 const concluidas = tasks.filter(t => t.completed).length;
                 return `
-                    <div class="checklist-category" style="margin-bottom: 1.5rem;">
-                        <div class="category-title" style="font-size: 1.1rem; font-weight: bold; padding: 0.5rem; background: #252525; border-left: 3px solid #ffd700; border-radius: 8px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; color: #ffd700;">
-                            <span>${cat}</span><span>${concluidas}/${tasks.length} concluídas</span>
-                        </div>
+                    <div class="checklist-category">
+                        <div class="category-title"><span>${cat}</span><span>${concluidas}/${tasks.length} concluídas</span></div>
                         ${tasks.map(task => `
-                            <div class="task-item" style="display: flex; align-items: center; padding: 0.75rem; background: #252525; border-radius: 8px; margin-bottom: 0.5rem; border: 1px solid #333;">
-                                <input type="checkbox" class="task-check" ${task.completed ? 'checked' : ''} onchange="window.toggleTaskComplete('${task.id}')" style="width: 20px; height: 20px; margin-right: 1rem; cursor: pointer; accent-color: #ffd700;">
-                                <div class="task-content" style="flex: 1;">
-                                    <div class="task-name" style="font-weight: 600; color: #fff;">${task.name}<span class="task-priority priority-${task.priority}" style="display: inline-block; padding: 0.2rem 0.5rem; border-radius: 20px; font-size: 0.7rem; margin-left: 0.5rem; background: ${task.priority === 'alta' ? '#e11d48' : task.priority === 'media' ? '#ffd700' : '#10b981'}; color: ${task.priority === 'media' ? '#1a1a1a' : '#fff'};">${task.priority === 'alta' ? 'Alta' : task.priority === 'media' ? 'Média' : 'Baixa'}</span></div>
-                                    ${task.due_date ? `<div class="task-due-date" style="font-size: 0.7rem; color: #888; margin-top: 0.25rem;">Vence: ${formatDate(task.due_date)}</div>` : ''}
+                            <div class="task-item">
+                                <input type="checkbox" class="task-check" ${task.completed ? 'checked' : ''} onchange="window.toggleTaskComplete('${task.id}')">
+                                <div class="task-content">
+                                    <div class="task-name">${task.name}<span class="task-priority priority-${task.priority}">${task.priority === 'alta' ? 'Alta' : task.priority === 'media' ? 'Média' : 'Baixa'}</span></div>
+                                    ${task.due_date ? `<div class="task-due-date">Vence: ${formatDate(task.due_date)}</div>` : ''}
                                 </div>
-                                <div class="task-actions" style="display: flex; gap: 0.5rem;">
-                                    ${!task.completed ? `<button class="btn-small" onclick="window.completeTask('${task.id}')" style="background: #10b981; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem;">Concluir</button>` : ''}
-                                    <button class="btn-small" onclick="window.editTask('${task.id}')" style="background: #ffd700; color: #1a1a1a; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem;">Editar</button>
-                                    <button class="btn-small" onclick="window.deleteTaskConfirm('${task.id}')" style="background: #e11d48; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.7rem;">Excluir</button>
+                                <div class="task-actions">
+                                    ${!task.completed ? `<button class="btn-small" onclick="window.completeTask('${task.id}')">Concluir</button>` : ''}
+                                    <button class="btn-small" onclick="window.editTask('${task.id}')">Editar</button>
+                                    <button class="btn-small" onclick="window.deleteTaskConfirm('${task.id}')">Excluir</button>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                 `;
             }).join('')}
-            ${filteredTasks.length === 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem; color: #888;">Nenhuma tarefa encontrada!</div>' : ''}
+            ${filteredTasks.length === 0 ? '<div class="empty-state">Nenhuma tarefa encontrada!</div>' : ''}
         </div>
     `;
 }
@@ -482,23 +484,22 @@ function renderCalendario() {
     const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
     
     return `
-        <div class="calendar-section" style="background: #1a1a1a; border-radius: 1rem; padding: 1.5rem; border: 1px solid #333;">
-            <div class="calendar-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
-                <h3 style="color: #ffd700;">${monthNames[state.calendarMonth]} ${state.calendarYear}</h3>
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <h3>${monthNames[state.calendarMonth]} ${state.calendarYear}</h3>
                 <div>
-                    <button class="btn-secondary" onclick="window.mudarMes(-1)" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700; margin-right: 0.5rem;">◀ Anterior</button>
-                    <button class="btn-secondary" onclick="window.mudarMes(1)" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Próximo ▶</button>
+                    <button class="btn-secondary" onclick="window.mudarMes(-1)">◀ Anterior</button>
+                    <button class="btn-secondary" onclick="window.mudarMes(1)">Próximo ▶</button>
                 </div>
             </div>
-            <div class="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem;">
-                ${diasSemana.map(d => `<div class="calendar-weekday" style="text-align: center; font-weight: bold; color: #ffd700; padding: 0.5rem;">${d}</div>`).join('')}
+            <div class="calendar-grid">
+                ${diasSemana.map(d => `<div class="calendar-weekday">${d}</div>`).join('')}
                 ${dias.map(dia => {
                     if (dia === null) {
-                        return '<div class="calendar-day empty" style="padding: 0.5rem; text-align: center; opacity: 0.3;"></div>';
+                        return '<div class="calendar-day empty"></div>';
                     }
                     return `<div class="calendar-day ${dia.temEvento ? 'has-event' : ''}" 
                                    data-date="${dia.data.toISOString()}" 
-                                   style="padding: 0.5rem; text-align: center; cursor: pointer; border-radius: 8px; transition: all 0.3s; ${dia.temEvento ? 'background: #ffd700; color: #1a1a1a; font-weight: bold;' : 'background: #252525; color: #fff;'}"
                                    onclick="window.selecionarDataCalendario('${dia.data.toISOString()}')">
                         ${dia.dia}
                     </div>`;
@@ -513,7 +514,6 @@ function renderCalendario() {
 // ============================================
 
 window.selecionarDataCalendario = async (dataISO) => {
-    console.log('Data clicada:', dataISO);
     const data = new Date(dataISO);
     const evento = state.events.find(event => {
         if (!event.event_date) return false;
@@ -524,7 +524,6 @@ window.selecionarDataCalendario = async (dataISO) => {
     });
     
     if (evento) { 
-        console.log('Evento encontrado:', evento);
         state.selectedEvent = evento.id; 
         await loadEventData(evento.id);
         window.setActiveTab('dashboard');
@@ -535,13 +534,65 @@ window.selecionarDataCalendario = async (dataISO) => {
 };
 
 // ============================================
+// RENDERIZAÇÃO SOBRE NÓS
+// ============================================
+
+function renderAbout() {
+    return `
+        <div class="about-section">
+            <div class="about-header-horizontal">
+                <div class="about-logo-horizontal">
+                    <img src="assets/LOGO3.png" alt="La Vie Casamentos Logo" class="about-logo-img-horizontal">
+                </div>
+                <div class="about-text-horizontal">
+                    <h1 class="about-logo-title">LA VIE</h1>
+                    <div class="about-logo-subtitle">CASAMENTOS</div>
+                    <p class="about-tagline">Realizando sonhos há mais de 10 anos</p>
+                </div>
+            </div>
+
+                <div class="about-card">
+                    <h2><i class="fas fa-bullseye"></i> Missão</h2>
+                    <p>Oferecer uma plataforma completa e intuitiva que permita aos casais planejarem seu casamento com tranquilidade, economia e organização, conectando-os aos melhores fornecedores e inspirando cada detalhe do grande dia.</p>
+                </div>
+
+                <div class="about-card">
+                    <h2><i class="fas fa-eye"></i> Visão</h2>
+                    <p>Ser referência nacional em plataformas de planejamento de casamentos, reconhecida pela inovação, confiabilidade e por transformar sonhos em realidade.</p>
+                </div>
+
+                <div class="about-card">
+                    <h2><i class="fas fa-gem"></i> Valores</h2>
+                    <ul class="about-values">
+                        <li><i class="fas fa-check-circle"></i> Amor pelo que fazemos</li>
+                        <li><i class="fas fa-check-circle"></i> Compromisso com a excelência</li>
+                        <li><i class="fas fa-check-circle"></i> Transparência e confiança</li>
+                        <li><i class="fas fa-check-circle"></i> Inovação constante</li>
+                        <li><i class="fas fa-check-circle"></i> Respeito aos sonhos de cada casal</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="about-footer">
+                <p>&copy; 2026 La Vie Casamentos. Todos os direitos reservados.</p>
+                <p>Transformando sonhos em realidade</p>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================
 // FUNÇÕES DE TEMAS
 // ============================================
 
 window.toggleThemeMenu = function() {
     const menu = document.getElementById('themeMenu');
     if (menu) {
-        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        if (menu.style.display === 'none' || getComputedStyle(menu).display === 'none') {
+            menu.style.display = 'block';
+        } else {
+            menu.style.display = 'none';
+        }
     }
 };
 
@@ -553,8 +604,6 @@ window.applyTheme = function(theme) {
     localStorage.setItem('selectedTheme', theme);
     const menu = document.getElementById('themeMenu');
     if (menu) menu.style.display = 'none';
-    const themeNames = { gold: 'Dourado', rose: 'Rosa', blue: 'Azul', green: 'Verde', purple: 'Roxo', dark: 'Dark' };
-    showNotification(`Tema ${themeNames[theme]} aplicado!`, 'success');
 };
 
 function loadSavedTheme() {
@@ -585,95 +634,115 @@ async function renderDashboard() {
     if (state.showTaskForm) modalHtml = renderTaskForm();
 
     app.innerHTML = `
-        <div class="header" style="background: linear-gradient(135deg, #1a1a2e, #0f0f1a); border-bottom: 2px solid #ffd700; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div class="tabs" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <button class="tab ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="window.setActiveTab('dashboard')" style="padding: 0.5rem 1rem; background: ${state.activeTab === 'dashboard' ? 'linear-gradient(135deg, #ffd700, #ffb347)' : '#1a1a1a'}; border: 1px solid #333; border-radius: 8px; cursor: pointer; color: ${state.activeTab === 'dashboard' ? '#1a1a1a' : '#ccc'};">Dashboard</button>
-                <button class="tab ${state.activeTab === 'checklist' ? 'active' : ''}" onclick="window.setActiveTab('checklist')" style="padding: 0.5rem 1rem; background: ${state.activeTab === 'checklist' ? 'linear-gradient(135deg, #ffd700, #ffb347)' : '#1a1a1a'}; border: 1px solid #333; border-radius: 8px; cursor: pointer; color: ${state.activeTab === 'checklist' ? '#1a1a1a' : '#ccc'};">Checklist</button>
-                <button class="tab ${state.activeTab === 'events' ? 'active' : ''}" onclick="window.setActiveTab('events')" style="padding: 0.5rem 1rem; background: ${state.activeTab === 'events' ? 'linear-gradient(135deg, #ffd700, #ffb347)' : '#1a1a1a'}; border: 1px solid #333; border-radius: 8px; cursor: pointer; color: ${state.activeTab === 'events' ? '#1a1a1a' : '#ccc'};">Eventos</button>
-                <button class="tab ${state.activeTab === 'calendar' ? 'active' : ''}" onclick="window.setActiveTab('calendar')" style="padding: 0.5rem 1rem; background: ${state.activeTab === 'calendar' ? 'linear-gradient(135deg, #ffd700, #ffb347)' : '#1a1a1a'}; border: 1px solid #333; border-radius: 8px; cursor: pointer; color: ${state.activeTab === 'calendar' ? '#1a1a1a' : '#ccc'};">Calendário</button>
+        <div class="header">
+            <div class="tabs">
+                <button class="tab ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="window.setActiveTab('dashboard')">Dashboard</button>
+                <button class="tab ${state.activeTab === 'checklist' ? 'active' : ''}" onclick="window.setActiveTab('checklist')">Checklist</button>
+                <button class="tab ${state.activeTab === 'events' ? 'active' : ''}" onclick="window.setActiveTab('events')">Eventos</button>
+                <button class="tab ${state.activeTab === 'calendar' ? 'active' : ''}" onclick="window.setActiveTab('calendar')">Calendário</button>
+                <button class="tab ${state.activeTab === 'about' ? 'active' : ''}" onclick="window.setActiveTab('about')">Sobre Nós</button>
             </div>
-            <div class="user-info" onclick="window.setActiveTab('profile')" style="display: flex; align-items: center; gap: 1rem; cursor: pointer;">
-                <div class="profile-pic" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #ffb347); display: flex; align-items: center; justify-content: center; overflow: hidden;">${photoUrl ? `<img src="${photoUrl}" style="width: 100%; height: 100%; object-fit: cover;">` : `<span>${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}</div>
-                <span style="color: #ffd700;">${state.user?.username}</span>
-                <button class="btn-logout" onclick="event.stopPropagation(); window.logout()" style="background: rgba(255, 215, 0, 0.2); border: 1px solid #ffd700; padding: 0.25rem 0.75rem; border-radius: 8px; color: #ffd700; cursor: pointer;">Sair</button>
+            <div class="user-info" onclick="window.setActiveTab('profile')">
+                <div class="profile-pic">${photoUrl ? `<img src="${photoUrl}" alt="Perfil">` : `<span>${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}</div>
+                <span>${state.user?.username}</span>
+                <button class="btn-logout" onclick="event.stopPropagation(); window.logout()">Sair</button>
             </div>
         </div>
-        <div class="container" style="max-width: 1400px; margin: 0 auto; padding: 2rem;">
+        <div class="container">
             <div class="tab-content ${state.activeTab === 'dashboard' ? 'active' : ''}" style="${state.activeTab !== 'dashboard' ? 'display: none;' : ''}">
                 ${state.selectedEvent && currentEvent ? `
-                    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
-                        <div class="stat-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333;"><h3 style="color: #ffd700;">Eventos</h3><div class="stat-number" style="font-size: 2rem; color: #fff;">${state.events.length}</div></div>
-                        <div class="stat-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333;"><h3 style="color: #ffd700;">Convidados</h3><div class="stat-number" style="font-size: 2rem; color: #fff;">${state.guests.length}</div></div>
-                        <div class="stat-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333;"><h3 style="color: #ffd700;">Fornecedores</h3><div class="stat-number" style="font-size: 2rem; color: #fff;">${state.suppliers.length}</div></div>
-                        <div class="stat-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333;"><h3 style="color: #ffd700;">Tarefas</h3><div class="stat-number" style="font-size: 2rem; color: #fff;">${state.tasks.filter(t => t.completed).length}/${state.tasks.length}</div></div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><h3>Eventos</h3><div class="stat-number">${state.events.length}</div></div>
+                        <div class="stat-card"><h3>Convidados</h3><div class="stat-number">${state.guests.length}</div></div>
+                        <div class="stat-card"><h3>Fornecedores</h3><div class="stat-number">${state.suppliers.length}</div></div>
+                        <div class="stat-card"><h3>Tarefas</h3><div class="stat-number">${state.tasks.filter(t => t.completed).length}/${state.tasks.length}</div></div>
                     </div>
-                    <div class="budget-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
-                        <div class="budget-card used" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333; border-left: 4px solid #ffd700;"><h3 style="color: #fff;">Utilizado</h3><div class="budget-value" style="font-size: 1.8rem; color: #ffd700;">${formatCurrency(totalGasto)}</div><small style="color: #fff;">${percentual.toFixed(1)}% do total</small></div>
-                        <div class="budget-card available" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; text-align: center; border: 1px solid #333; border-left: 4px solid #10b981;"><h3 style="color: #fff;">Disponível</h3><div class="budget-value" style="font-size: 1.8rem; color: #10b981;">${formatCurrency(orcamentoTotal - totalGasto)}</div><small style="color: #fff;">${(100 - percentual).toFixed(1)}% restante</small></div>
+                    <div class="budget-grid">
+                        <div class="budget-card used">
+                            <h3>Utilizado</h3>
+                            <div class="budget-value">${formatCurrency(totalGasto)}</div>
+                            <small>${percentual.toFixed(1)}% do total</small>
+                        </div>
+                        <div class="budget-card available">
+                            <h3>Disponível</h3>
+                            <div class="budget-value">${formatCurrency(orcamentoTotal - totalGasto)}</div>
+                            <small>${(100 - percentual).toFixed(1)}% restante</small>
+                        </div>
                     </div>
-                    <div class="progress-section" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; margin-bottom: 2rem;">
-                        <h3 style="color: #ffd700;">Progresso do Orçamento: ${percentual.toFixed(1)}%</h3>
-                        <div class="progress-bar" style="background: #333; border-radius: 10px; height: 20px; overflow: hidden; margin: 0.5rem 0;"><div class="progress-fill" style="background: linear-gradient(90deg, #ffd700, #ffb347); width: ${percentual}%; height: 100%;"></div></div>
-                        <h3 style="color: #ffd700;">Checklist: ${progressoChecklist.toFixed(0)}%</h3>
-                        <div class="progress-bar" style="background: #333; border-radius: 10px; height: 20px; overflow: hidden; margin: 0.5rem 0;"><div class="progress-fill" style="background: linear-gradient(90deg, #ffd700, #ffb347); width: ${progressoChecklist}%; height: 100%;"></div></div>
+                    <div class="progress-section">
+                        <h3>Progresso do Orçamento: ${percentual.toFixed(1)}%</h3>
+                        <div class="progress-bar"><div class="progress-fill" style="width: ${percentual}%"></div></div>
+                        <h3>Checklist: ${progressoChecklist.toFixed(0)}%</h3>
+                        <div class="progress-bar"><div class="progress-fill" style="width: ${progressoChecklist}%"></div></div>
                     </div>
-                    <div class="charts-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
-                        <div class="chart-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; border: 1px solid #333;"><h3 style="color: #ffd700;">Gastos por Categoria</h3><div class="chart-container" style="height: 250px;"><canvas id="graficoPizzaCategorias"></canvas></div></div>
-                        <div class="chart-card" style="background: #1a1a1a; padding: 1rem; border-radius: 1rem; border: 1px solid #333;"><h3 style="color: #ffd700;">Status dos Convidados</h3><div class="chart-container" style="height: 250px;"><canvas id="graficoPizzaStatus"></canvas></div></div>
+                    <div class="charts-grid">
+                        <div class="chart-card"><h3>Gastos por Categoria</h3><div class="chart-container"><canvas id="graficoPizzaCategorias"></canvas></div></div>
+                        <div class="chart-card"><h3>Status dos Convidados</h3><div class="chart-container"><canvas id="graficoPizzaStatus"></canvas></div></div>
                     </div>
-                ` : `<div class="empty-state" style="text-align: center; padding: 2rem; background: #1a1a1a; border-radius: 1rem;"><p>Selecione um evento para ver o dashboard!</p><button class="btn" onclick="window.setActiveTab('events')" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 1rem;">Ver meus eventos</button></div>`}
+                ` : `<div class="empty-state"><p>Selecione um evento para ver o dashboard!</p><button class="btn" onclick="window.setActiveTab('events')">Ver meus eventos</button></div>`}
             </div>
 
-            <div class="tab-content ${state.activeTab === 'checklist' ? 'active' : ''}" style="${state.activeTab !== 'checklist' ? 'display: none;' : ''}">${renderChecklist()}</div>
+            <div class="tab-content ${state.activeTab === 'checklist' ? 'active' : ''}" style="${state.activeTab !== 'checklist' ? 'display: none;' : ''}">
+                ${renderChecklist()}
+            </div>
 
             <div class="tab-content ${state.activeTab === 'events' ? 'active' : ''}" style="${state.activeTab !== 'events' ? 'display: none;' : ''}">
-                <div class="section-header" style="display: flex; justify-content: space-between; margin: 1rem 0;"><h2 style="color: #ffd700;">Meus Eventos</h2><button class="btn" onclick="window.openEventModal()" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Novo Evento</button></div>
-                ${state.events.length === 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem; background: #1a1a1a; border-radius: 1rem;">Nenhum evento. Crie seu primeiro evento!</div>' : `
-                    <div class="events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">${state.events.map(event => {
+                <div class="section-header"><h2>Meus Eventos</h2><button class="btn" onclick="window.openEventModal()">Novo Evento</button></div>
+                ${state.events.length === 0 ? '<div class="empty-state">Nenhum evento. Crie seu primeiro evento!</div>' : `
+                    <div class="events-grid">${state.events.map(event => {
                         const gastosEvento = state.suppliers.filter(s => s.event_id === event.id).reduce((s, i) => s + (i.value || 0), 0);
                         const perc = event.budget_total ? (gastosEvento / event.budget_total) * 100 : 0;
-                        return `<div class="event-card ${state.selectedEvent === event.id ? 'selected' : ''}" onclick="window.selectEvent('${event.id}')" style="background: #1a1a1a; border-radius: 1rem; overflow: hidden; cursor: pointer; border: 1px solid ${state.selectedEvent === event.id ? '#ffd700' : '#333'}; transition: all 0.3s;">
-                            <div class="event-card-header" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; padding: 1rem;"><h4>${event.name || event.couple_names || 'Evento'}</h4></div>
-                            <div class="event-card-body" style="padding: 1rem;">
-                                <p style="margin: 0.5rem 0; color: #ccc;"><strong style="color: #ffd700;">Tipo:</strong> ${event.event_type || 'Tipo'}</p>
-                                <p style="margin: 0.5rem 0; color: #ccc;"><strong style="color: #ffd700;">Orçamento:</strong> ${formatCurrency(event.budget_total)}</p>
-                                <p style="margin: 0.5rem 0; color: #ccc;"><strong style="color: #ffd700;">Gasto:</strong> ${formatCurrency(gastosEvento)} (${perc.toFixed(0)}%)</p>
-                                <p style="margin: 0.5rem 0; color: #ccc;"><strong style="color: #ffd700;">Data:</strong> ${formatDate(event.event_date)}</p>
+                        return `<div class="event-card ${state.selectedEvent === event.id ? 'selected' : ''}" onclick="window.selectEvent('${event.id}')">
+                            <div class="event-card-header"><h4>${event.name || event.couple_names || 'Evento'}</h4></div>
+                            <div class="event-card-body">
+                                <p><strong>Tipo:</strong> ${event.event_type || 'Tipo'}</p>
+                                <p><strong>Orçamento:</strong> ${formatCurrency(event.budget_total)}</p>
+                                <p><strong>Gasto:</strong> ${formatCurrency(gastosEvento)} (${perc.toFixed(0)}%)</p>
+                                <p><strong>Data:</strong> ${formatDate(event.event_date)}</p>
                             </div>
-                            <div style="padding: 0.75rem; display: flex; gap: 0.5rem;">
-                                <button class="btn-secondary" style="flex: 1; background: #252525; border: 1px solid #ffd700; padding: 0.25rem; border-radius: 8px; cursor: pointer; color: #ffd700;" onclick="event.stopPropagation(); window.editEvent('${event.id}')">Editar</button>
-                                <button class="btn-secondary" style="flex: 1; background: #252525; border: 1px solid #e11d48; padding: 0.25rem; border-radius: 8px; cursor: pointer; color: #e11d48;" onclick="event.stopPropagation(); window.deleteEventConfirm('${event.id}')">Excluir</button>
+                            <div style="padding:0.75rem; display:flex; gap:0.5rem;">
+                                <button class="btn-secondary" style="flex:1" onclick="event.stopPropagation(); window.editEvent('${event.id}')">Editar</button>
+                                <button class="btn-secondary" style="flex:1" onclick="event.stopPropagation(); window.deleteEventConfirm('${event.id}')">Excluir</button>
                             </div>
                         </div>`;
                     }).join('')}</div>
                 `}
                 ${state.selectedEvent && currentEvent ? `
                     <div style="margin-top: 2rem;">
-                        <div class="section-header" style="display: flex; justify-content: space-between; margin: 1rem 0;"><h2 style="color: #ffd700;">Gerenciando: ${currentEvent.name || currentEvent.couple_names || 'Evento'}</h2><button class="btn-secondary" onclick="window.selectEvent(null)" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Trocar Evento</button></div>
+                        <div class="section-header"><h2>Gerenciando: ${currentEvent.name || currentEvent.couple_names || 'Evento'}</h2><button class="btn-secondary" onclick="window.selectEvent(null)">Trocar Evento</button></div>
                         
-                        <div class="section-header" style="display: flex; justify-content: space-between; margin: 1rem 0;">
-                            <h2 style="color: #ffd700;">Convidados</h2>
+                        <div class="section-header">
+                            <h2>Convidados</h2>
                             <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn" onclick="window.openGuestModal()" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Adicionar</button>
-                                <button class="btn-secondary" onclick="window.exportGuestsToExcel()" style="background: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: white;">Exportar Excel</button>
+                                <button class="btn" onclick="window.openGuestModal()">Adicionar</button>
+                                <button class="btn-secondary" onclick="window.exportGuestsToExcel()">Exportar Excel</button>
                             </div>
                         </div>
-                        <div class="guest-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">${state.guests.map(g => `<div class="guest-card" style="background: #252525; padding: 1rem; border-radius: 0.5rem; display: flex; justify-content: space-between; border: 1px solid #333; color: #fff;"><div><strong style="color: #ffd700;">${g.name}</strong><div style="font-size: 0.7rem; color: #888;">${g.status === 'confirmado' ? 'Confirmado' : g.status === 'recusado' ? 'Recusado' : 'Pendente'}${g.table_name ? ` • Mesa ${g.table_name}` : ''}</div></div><div style="display: flex; gap: 0.5rem;"><button class="btn-small" onclick="window.editGuest('${g.id}')" style="background: #ffd700; color: #1a1a1a; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer;">Editar</button><button class="btn-small" onclick="window.deleteGuestConfirm('${g.id}')" style="background: #e11d48; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer;">Excluir</button></div></div>`).join('')}${state.guests.length === 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem; color: #888;">Nenhum convidado</div>' : ''}</div>
+                        <div class="guest-list">${state.guests.map(g => `<div class="guest-card"><div><strong>${g.name}</strong><div style="font-size:0.7rem; color:#888;">${g.status === 'confirmado' ? 'Confirmado' : g.status === 'recusado' ? 'Recusado' : 'Pendente'}${g.table_name ? ` • Mesa ${g.table_name}` : ''}</div></div><div style="display: flex; gap: 0.5rem;"><button class="btn-small" onclick="window.editGuest('${g.id}')">Editar</button><button class="btn-small" onclick="window.deleteGuestConfirm('${g.id}')">Excluir</button></div></div>`).join('')}${state.guests.length === 0 ? '<div class="empty-state">Nenhum convidado</div>' : ''}</div>
                         
-                        <div class="section-header" style="display: flex; justify-content: space-between; margin: 1rem 0;">
-                            <h2 style="color: #ffd700;">Fornecedores</h2>
+                        <div class="section-header">
+                            <h2>Fornecedores</h2>
                             <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn" onclick="window.openSupplierModal()" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Adicionar</button>
-                                <button class="btn-secondary" onclick="window.exportSuppliersToExcel()" style="background: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: white;">Exportar Excel</button>
+                                <button class="btn" onclick="window.openSupplierModal()">Adicionar</button>
+                                <button class="btn-secondary" onclick="window.exportSuppliersToExcel()">Exportar Excel</button>
                             </div>
                         </div>
-                        <div class="supplier-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">${state.suppliers.map(s => `<div class="supplier-card" style="background: #252525; padding: 1rem; border-radius: 0.5rem; display: flex; justify-content: space-between; border: 1px solid #333; color: #fff;"><div><strong style="color: #ffd700;">${s.name}</strong><div style="font-size: 0.7rem; color: #888;">${s.category} • ${formatCurrency(s.value)}<br>${s.status === 'contratado' ? 'Contratado' : s.status === 'negociacao' ? 'Negociação' : 'Cotado'}</div></div><div style="display: flex; gap: 0.5rem;"><button class="btn-small" onclick="window.editSupplier('${s.id}')" style="background: #ffd700; color: #1a1a1a; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer;">Editar</button><button class="btn-small" onclick="window.deleteSupplierConfirm('${s.id}')" style="background: #e11d48; color: white; border: none; padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer;">Excluir</button></div></div>`).join('')}${state.suppliers.length === 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem; color: #888;">Nenhum fornecedor</div>' : ''}</div>
+                        <div class="supplier-list">${state.suppliers.map(s => `<div class="supplier-card"><div><strong>${s.name}</strong><div style="font-size:0.7rem; color:#888;">${s.category} • ${formatCurrency(s.value)}<br>${s.status === 'contratado' ? 'Contratado' : s.status === 'negociacao' ? 'Negociação' : 'Cotado'}</div></div><div style="display: flex; gap: 0.5rem;"><button class="btn-small" onclick="window.editSupplier('${s.id}')">Editar</button><button class="btn-small" onclick="window.deleteSupplierConfirm('${s.id}')">Excluir</button></div></div>`).join('')}${state.suppliers.length === 0 ? '<div class="empty-state">Nenhum fornecedor</div>' : ''}</div>
                     </div>
-                ` : state.events.length > 0 ? '<div class="empty-state" style="text-align: center; padding: 2rem;">Clique em um evento para gerenciar</div>' : ''}
+                ` : state.events.length > 0 ? '<div class="empty-state">Clique em um evento para gerenciar</div>' : ''}
             </div>
 
-            <div class="tab-content ${state.activeTab === 'calendar' ? 'active' : ''}" style="${state.activeTab !== 'calendar' ? 'display: none;' : ''}">${renderCalendario()}</div>
-            <div class="tab-content ${state.activeTab === 'profile' ? 'active' : ''}" style="${state.activeTab !== 'profile' ? 'display: none;' : ''}">${renderPerfil()}</div>
+            <div class="tab-content ${state.activeTab === 'calendar' ? 'active' : ''}" style="${state.activeTab !== 'calendar' ? 'display: none;' : ''}">
+                ${renderCalendario()}
+            </div>
+
+            <div class="tab-content ${state.activeTab === 'about' ? 'active' : ''}" style="${state.activeTab !== 'about' ? 'display: none;' : ''}">
+                ${renderAbout()}
+            </div>
+
+            <div class="tab-content ${state.activeTab === 'profile' ? 'active' : ''}" style="${state.activeTab !== 'profile' ? 'display: none;' : ''}">
+                ${renderPerfil()}
+            </div>
         </div>
         ${modalHtml}
     `;
@@ -688,54 +757,54 @@ async function renderDashboard() {
 
 function renderEventForm() {
     const event = state.editingEvent;
-    return `<div class="modal" id="eventModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;"><div class="modal-content" style="background: #1a1a1a; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; border: 1px solid #ffd700;"><h2 style="color: #ffd700;">${event ? 'Editar Evento' : 'Novo Evento'}</h2>
+    return `<div class="modal" id="eventModal"><div class="modal-content"><h2>${event ? 'Editar Evento' : 'Novo Evento'}</h2>
         <form id="eventForm">
-            <div class="form-group"><label style="color: #ffd700;">Nome do Evento</label><input type="text" name="name" value="${event?.name || ''}" placeholder="Ex: Casamento Ana e João" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Nomes dos Noivos</label><input type="text" name="couple_names" value="${event?.couple_names || ''}" placeholder="Ana & João" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Tipo</label><select name="event_type" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>Casamento</option><option>Corporativo</option><option>Aniversário</option><option>Festa</option></select></div>
-            <div class="form-group"><label style="color: #ffd700;">Tema</label><select name="theme" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>Clássico</option><option>Moderno</option><option>Rústico</option><option>Luxo</option></select></div>
-            <div class="form-group"><label style="color: #ffd700;">Orçamento (R$)</label><input type="number" name="budget_total" value="${event?.budget_total || ''}" placeholder="0,00" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Data do Evento</label><input type="date" name="event_date" value="${event?.event_date || ''}" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Local</label><input type="text" name="venue" value="${event?.venue || ''}" placeholder="Local do evento" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeEventModal()" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Cancelar</button></div>
+            <div class="form-group"><label>Nome do Evento</label><input type="text" name="name" value="${event?.name || ''}" placeholder="Ex: Casamento Ana e João"></div>
+            <div class="form-group"><label>Nomes dos Noivos</label><input type="text" name="couple_names" value="${event?.couple_names || ''}" placeholder="Ana & João"></div>
+            <div class="form-group"><label>Tipo</label><select name="event_type"><option>Casamento</option><option>Corporativo</option><option>Aniversário</option><option>Festa</option></select></div>
+            <div class="form-group"><label>Tema</label><select name="theme"><option>Clássico</option><option>Moderno</option><option>Rústico</option><option>Luxo</option></select></div>
+            <div class="form-group"><label>Orçamento (R$)</label><input type="number" name="budget_total" value="${event?.budget_total || ''}" placeholder="0,00"></div>
+            <div class="form-group"><label>Data do Evento</label><input type="date" name="event_date" value="${event?.event_date || ''}"></div>
+            <div class="form-group"><label>Local</label><input type="text" name="venue" value="${event?.venue || ''}" placeholder="Local do evento"></div>
+            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeEventModal()">Cancelar</button></div>
         </form></div></div>`;
 }
 
 function renderGuestForm() {
     const guest = state.editingGuest;
-    return `<div class="modal" id="guestModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;"><div class="modal-content" style="background: #1a1a1a; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; border: 1px solid #ffd700;"><h2 style="color: #ffd700;">${guest ? 'Editar Convidado' : 'Novo Convidado'}</h2>
+    return `<div class="modal" id="guestModal"><div class="modal-content"><h2>${guest ? 'Editar Convidado' : 'Novo Convidado'}</h2>
         <form id="guestForm">
-            <div class="form-group"><label style="color: #ffd700;">Nome do Convidado</label><input type="text" name="name" value="${guest?.name || ''}" required placeholder="Nome completo" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Grupo/Família</label><input type="text" name="group_name" value="${guest?.group_name || ''}" placeholder="Ex: Família Silva" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Status</label><select name="status" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>pendente</option><option>confirmado</option><option>recusado</option></select></div>
-            <div class="form-group"><label style="color: #ffd700;">Número da Mesa</label><input type="text" name="table_name" value="${guest?.table_name || ''}" placeholder="Mesa 01" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Telefone</label><input type="text" name="phone" value="${guest?.phone || ''}" placeholder="(11) 99999-9999" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeGuestModal()" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Cancelar</button></div>
+            <div class="form-group"><label>Nome do Convidado</label><input type="text" name="name" value="${guest?.name || ''}" required placeholder="Nome completo"></div>
+            <div class="form-group"><label>Grupo/Família</label><input type="text" name="group_name" value="${guest?.group_name || ''}" placeholder="Ex: Família Silva"></div>
+            <div class="form-group"><label>Status</label><select name="status"><option>pendente</option><option>confirmado</option><option>recusado</option></select></div>
+            <div class="form-group"><label>Número da Mesa</label><input type="text" name="table_name" value="${guest?.table_name || ''}" placeholder="Mesa 01"></div>
+            <div class="form-group"><label>Telefone</label><input type="text" name="phone" value="${guest?.phone || ''}" placeholder="(11) 99999-9999"></div>
+            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeGuestModal()">Cancelar</button></div>
         </form></div></div>`;
 }
 
 function renderSupplierForm() {
     const supplier = state.editingSupplier;
-    return `<div class="modal" id="supplierModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;"><div class="modal-content" style="background: #1a1a1a; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; border: 1px solid #ffd700;"><h2 style="color: #ffd700;">${supplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</h2>
+    return `<div class="modal" id="supplierModal"><div class="modal-content"><h2>${supplier ? 'Editar Fornecedor' : 'Novo Fornecedor'}</h2>
         <form id="supplierForm">
-            <div class="form-group"><label style="color: #ffd700;">Nome do Fornecedor</label><input type="text" name="name" value="${supplier?.name || ''}" required placeholder="Nome do fornecedor" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Categoria</label><select name="category" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>Buffet</option><option>Fotografia</option><option>Música</option><option>Decoração</option><option>Espaço</option><option>Vestuário</option><option>Outro</option></select></div>
-            <div class="form-group"><label style="color: #ffd700;">Status</label><select name="status" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>cotado</option><option>negociacao</option><option>contratado</option></select></div>
-            <div class="form-group"><label style="color: #ffd700;">Valor (R$)</label><input type="number" name="value" value="${supplier?.value || 0}" placeholder="0,00" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Contato</label><input type="text" name="contact" value="${supplier?.contact || ''}" placeholder="Telefone ou email" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeSupplierModal()" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Cancelar</button></div>
+            <div class="form-group"><label>Nome do Fornecedor</label><input type="text" name="name" value="${supplier?.name || ''}" required placeholder="Nome do fornecedor"></div>
+            <div class="form-group"><label>Categoria</label><select name="category"><option>Buffet</option><option>Fotografia</option><option>Música</option><option>Decoração</option><option>Espaço</option><option>Vestuário</option><option>Outro</option></select></div>
+            <div class="form-group"><label>Status</label><select name="status"><option>cotado</option><option>negociacao</option><option>contratado</option></select></div>
+            <div class="form-group"><label>Valor (R$)</label><input type="number" name="value" value="${supplier?.value || 0}" placeholder="0,00"></div>
+            <div class="form-group"><label>Contato</label><input type="text" name="contact" value="${supplier?.contact || ''}" placeholder="Telefone ou email"></div>
+            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeSupplierModal()">Cancelar</button></div>
         </form></div></div>`;
 }
 
 function renderTaskForm() {
     const task = state.editingTask;
-    return `<div class="modal" id="taskModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000;"><div class="modal-content" style="background: #1a1a1a; padding: 2rem; border-radius: 1rem; width: 90%; max-width: 500px; border: 1px solid #ffd700;"><h2 style="color: #ffd700;">${task ? 'Editar Tarefa' : 'Nova Tarefa'}</h2>
+    return `<div class="modal" id="taskModal"><div class="modal-content"><h2>${task ? 'Editar Tarefa' : 'Nova Tarefa'}</h2>
         <form id="taskForm">
-            <div class="form-group"><label style="color: #ffd700;">Nome da Tarefa</label><input type="text" name="name" value="${task?.name || ''}" required placeholder="Ex: Contratar buffet" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div class="form-group"><label style="color: #ffd700;">Categoria</label><select name="category" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>12 meses</option><option>9 meses</option><option>6 meses</option><option>3 meses</option><option>1 mês</option><option>1 semana</option><option>Dia do Casamento</option></select></div>
-            <div class="form-group"><label style="color: #ffd700;">Prioridade</label><select name="priority" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"><option>baixa</option><option>media</option><option>alta</option></select></div>
-            <div class="form-group"><label style="color: #ffd700;">Data Limite</label><input type="date" name="due_date" value="${task?.due_date || ''}" style="width: 100%; padding: 0.75rem; background: #252525; border: 1px solid #333; border-radius: 8px; color: #fff;"></div>
-            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn" style="background: linear-gradient(135deg, #ffd700, #ffb347); color: #1a1a1a; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeTaskModal()" style="background: #252525; border: 1px solid #ffd700; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; color: #ffd700;">Cancelar</button></div>
+            <div class="form-group"><label>Nome da Tarefa</label><input type="text" name="name" value="${task?.name || ''}" required placeholder="Ex: Contratar buffet"></div>
+            <div class="form-group"><label>Categoria</label><select name="category"><option>12 meses</option><option>9 meses</option><option>6 meses</option><option>3 meses</option><option>1 mês</option><option>1 semana</option><option>Dia do Casamento</option></select></div>
+            <div class="form-group"><label>Prioridade</label><select name="priority"><option>baixa</option><option>media</option><option>alta</option></select></div>
+            <div class="form-group"><label>Data Limite</label><input type="date" name="due_date" value="${task?.due_date || ''}"></div>
+            <div style="display:flex; gap:1rem; margin-top: 1rem;"><button type="submit" class="btn">Salvar</button><button type="button" class="btn-secondary" onclick="window.closeTaskModal()">Cancelar</button></div>
         </form></div></div>`;
 }
 
@@ -873,11 +942,22 @@ async function handleTaskSubmit(e) {
 async function handleProfileSubmit(e) {
     e.preventDefault();
     const profileData = Object.fromEntries(new FormData(e.target));
-    const result = await updateUserProfile(state.user.id, profileData);
+    
+    const userData = await getUserProfile(state.user.id);
+    const currentPhoto = state.user.profile?.photo || userData?.profile?.photo || null;
+    
+    const result = await updateUserProfile(state.user.id, {
+        fullName: profileData.fullName || '',
+        cpf: profileData.cpf || '',
+        birthDate: profileData.birthDate || '',
+        address: profileData.address || '',
+        phone: profileData.phone || '',
+        photo: currentPhoto
+    });
     
     if (result.success) {
-        const userData = await getUserProfile(state.user.id);
-        state.user.profile = userData?.profile || {};
+        const updatedUserData = await getUserProfile(state.user.id);
+        state.user.profile = updatedUserData?.profile || {};
         showNotification('Perfil atualizado com sucesso!', 'success');
         renderDashboard();
     } else {
@@ -890,12 +970,25 @@ async function handlePhotoUpload(e) {
     if (file) {
         const reader = new FileReader();
         reader.onload = async (event) => {
-            const result = await updateUserProfile(state.user.id, { photo: event.target.result });
+            const userData = await getUserProfile(state.user.id);
+            const currentProfile = userData?.profile || {};
+            
+            const result = await updateUserProfile(state.user.id, {
+                photo: event.target.result,
+                fullName: currentProfile.fullName || '',
+                cpf: currentProfile.cpf || '',
+                birthDate: currentProfile.birthDate || '',
+                address: currentProfile.address || '',
+                phone: currentProfile.phone || ''
+            });
+            
             if (result.success) {
-                const userData = await getUserProfile(state.user.id);
-                state.user.profile = userData?.profile || {};
+                const updatedUserData = await getUserProfile(state.user.id);
+                state.user.profile = updatedUserData?.profile || {};
                 showNotification('Foto atualizada!', 'success');
                 renderDashboard();
+            } else {
+                showNotification('Erro ao atualizar foto', 'error');
             }
         };
         reader.readAsDataURL(file);
@@ -910,44 +1003,47 @@ function renderAuth() {
     const isLogin = state.authMode === 'login';
     
     document.getElementById('app').innerHTML = `
-        <div class="auth-container" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0a0a0a, #1a1a1a);">
-            <div class="auth-box" style="width: 100%; max-width: 420px; margin: 1rem;">
-                <div class="auth-logo" style="text-align: center; margin-bottom: 2rem;">
-                    <h1 style="font-size: 3rem; font-weight: 300; letter-spacing: 8px; background: linear-gradient(135deg, #ffd700, #ffb347); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">LA VIE</h1>
-                    <div class="subtitle" style="font-size: 0.7rem; letter-spacing: 4px; color: #ffd700;">CASAMENTOS</div>
-                    <div class="tagline" style="font-size: 0.8rem; color: #888; margin-top: 0.5rem;">Seu sonho feito por especialistas</div>
+        <div class="auth-container">
+            <div class="auth-box">
+                <div class="auth-logo">
+                    <h1>LA VIE</h1>
+                    <div class="subtitle">CASAMENTOS</div>
+                    <div class="tagline">Seu sonho feito por especialistas</div>
                 </div>
-                <div class="auth-card" style="background: rgba(26,26,26,0.95); backdrop-filter: blur(10px); border-radius: 16px; padding: 2rem; border: 1px solid rgba(255,215,0,0.3);">
-                    <div class="auth-tabs" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255,215,0,0.3);">
-                        <button class="auth-tab ${isLogin ? 'active' : ''}" onclick="window.setAuthMode('login')" style="flex: 1; text-align: center; padding: 0.75rem; background: none; border: none; color: ${isLogin ? '#ffd700' : '#888'}; font-size: 1rem; font-weight: 600; cursor: pointer; border-bottom: ${isLogin ? '2px solid #ffd700' : 'none'};">Login</button>
-                        <button class="auth-tab ${!isLogin ? 'active' : ''}" onclick="window.setAuthMode('register')" style="flex: 1; text-align: center; padding: 0.75rem; background: none; border: none; color: ${!isLogin ? '#ffd700' : '#888'}; font-size: 1rem; font-weight: 600; cursor: pointer; border-bottom: ${!isLogin ? '2px solid #ffd700' : 'none'};">Cadastrar</button>
+                <div class="auth-card">
+                    <div class="auth-tabs">
+                        <button class="auth-tab ${isLogin ? 'active' : ''}" onclick="window.setAuthMode('login')">Login</button>
+                        <button class="auth-tab ${!isLogin ? 'active' : ''}" onclick="window.setAuthMode('register')">Cadastrar</button>
                     </div>
                     <div id="authMessage" class="error-message" style="display:none"></div>
                     
                     ${isLogin ? `
-                        <button id="googleLoginBtn" class="auth-btn google-btn" style="width: 100%; padding: 0.75rem; background: #4285f4; border: none; border-radius: 8px; color: white; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
-                            <svg style="width:20px;height:20px;" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        <button id="googleLoginBtn" class="auth-btn google-btn">
+                            <svg style="width:20px;height:20px;margin-right:10px;" viewBox="0 0 24 24">
+                                <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
                             Entrar com Google
                         </button>
-                        <div class="divider" style="display: flex; align-items: center; text-align: center; margin: 1rem 0; color: #888;"><span style="flex: 1; border-bottom: 1px solid rgba(255,215,0,0.3);"></span><span style="margin: 0 10px;">ou</span><span style="flex: 1; border-bottom: 1px solid rgba(255,215,0,0.3);"></span></div>
+                        <div class="divider"><span>ou</span></div>
                         <form id="loginForm" class="auth-form">
-                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">EMAIL</label><input type="email" id="loginEmail" placeholder="seuemail@exemplo.com" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
-                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">SENHA</label><input type="password" id="loginPassword" placeholder="Digite sua senha" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
-                            <button type="submit" class="auth-btn" style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #ffd700, #ffb347); border: none; border-radius: 8px; color: #1a1a1a; font-size: 1rem; font-weight: bold; cursor: pointer;">ENTRAR</button>
-                            <div style="text-align: center; margin-top: 1rem;">
-                                <a onclick="window.forgotPassword()" style="color: #ffd700; cursor: pointer; font-size: 0.8rem;">Esqueceu sua senha?</a>
-                            </div>
-                            <div style="text-align: center; margin-top: 0.5rem;">
-                                <a onclick="window.resendVerification()" style="color: #888; cursor: pointer; font-size: 0.7rem;">Não recebeu o email de verificação?</a>
+                            <div class="form-group"><label>EMAIL</label><input type="email" id="loginEmail" placeholder="seuemail@exemplo.com" required></div>
+                            <div class="form-group"><label>SENHA</label><input type="password" id="loginPassword" placeholder="Digite sua senha" required></div>
+                            <button type="submit" class="auth-btn">ENTRAR</button>
+                            <div class="forgot-links">
+                                <a onclick="window.forgotPassword()">Esqueceu sua senha?</a>
+                                <a onclick="window.resendVerification()">Não recebeu o email de verificação?</a>
                             </div>
                         </form>
                     ` : `
                         <form id="registerForm" class="auth-form">
-                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">NOME DE USUÁRIO</label><input type="text" id="regUsername" placeholder="Como quer ser chamado" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
-                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">EMAIL</label><input type="email" id="regEmail" placeholder="seuemail@exemplo.com" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
-                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">SENHA</label><input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
-                            <div class="form-group" style="margin-bottom: 1rem;"><label style="color: #ffd700;">CONFIRMAR SENHA</label><input type="password" id="regConfirmPassword" placeholder="Digite novamente" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; color: #fff;"></div>
-                            <button type="submit" class="auth-btn" style="width: 100%; padding: 0.75rem; background: linear-gradient(135deg, #ffd700, #ffb347); border: none; border-radius: 8px; color: #1a1a1a; font-size: 1rem; font-weight: bold; cursor: pointer;">CADASTRAR</button>
+                            <div class="form-group"><label>NOME DE USUÁRIO</label><input type="text" id="regUsername" placeholder="Como quer ser chamado" required></div>
+                            <div class="form-group"><label>EMAIL</label><input type="email" id="regEmail" placeholder="seuemail@exemplo.com" required></div>
+                            <div class="form-group"><label>SENHA</label><input type="password" id="regPassword" placeholder="Mínimo 6 caracteres" required></div>
+                            <div class="form-group"><label>CONFIRMAR SENHA</label><input type="password" id="regConfirmPassword" placeholder="Digite novamente" required></div>
+                            <button type="submit" class="auth-btn">CADASTRAR</button>
                         </form>
                     `}
                 </div>
@@ -1074,7 +1170,6 @@ window.completeTask = async function(id) {
         state.tasks = await getUserTasks(state.user.id);
     }
     renderDashboard();
-    showNotification('Tarefa concluída! Parabéns!', 'success');
 };
 
 // ============================================
