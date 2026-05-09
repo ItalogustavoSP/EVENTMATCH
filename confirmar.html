@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar Presença - La Vie Casamentos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .container {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        h1 { color: #ffd700; margin-bottom: 1rem; }
+        .loading { color: #ffd700; }
+        .error { color: #e11d48; }
+        .success { color: #10b981; }
+        .event-details {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: left;
+        }
+        .event-details p { margin: 0.5rem 0; color: #ccc; }
+        .event-details strong { color: #ffd700; }
+        .buttons { display: flex; gap: 1rem; margin: 1.5rem 0; justify-content: center; }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-confirm { background: #10b981; color: white; }
+        .btn-decline { background: #e11d48; color: white; }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .footer { margin-top: 1rem; font-size: 0.7rem; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container" id="content">
+        <div class="loading">🔄 Carregando...</div>
+    </div>
+
+    <script>
+        // Firebase SDKs
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTg35X3QhCeQCXZR_mfvdHufzyJycDAhg",
+            authDomain: "la-vie-casamentos.firebaseapp.com",
+            projectId: "la-vie-casamentos",
+            storageBucket: "la-vie-casamentos.firebasestorage.app",
+            messagingSenderId: "44479756816",
+            appId: "1:44479756816:web:1fd88c199f3e782baae895"
+        };
+
+        // Função para obter parâmetros da URL
+        function getUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                eventId: params.get('eventId'),
+                guestId: params.get('guestId'),
+                status: params.get('status')
+            };
+        }
+
+        const { eventId, guestId, status } = getUrlParams();
+        
+        console.log('=== DEBUG CONFIRMAR.HTML ===');
+        console.log('URL completa:', window.location.href);
+        console.log('eventId:', eventId);
+        console.log('guestId:', guestId);
+        console.log('status:', status);
+
+        const contentDiv = document.getElementById('content');
+
+        if (!eventId || !guestId) {
+            contentDiv.innerHTML = `
+                <div class="error">
+                    <h1>❌ Link Inválido</h1>
+                    <p>Não foi possível identificar o evento ou convidado.</p>
+                    <p>Entre em contato com os organizadores.</p>
+                    <div style="margin-top: 1rem; font-size: 0.7rem; color: #555;">
+                        Debug: eventId=${eventId || 'não encontrado'}<br>
+                        guestId=${guestId || 'não encontrado'}
+                    </div>
+                </div>
+            `;
+        } else {
+            // Carregar Firebase dinamicamente
+            const script = document.createElement('script');
+            script.src = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+            script.onload = () => {
+                const firestoreScript = document.createElement('script');
+                firestoreScript.src = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+                firestoreScript.onload = () => {
+                    firebase.initializeApp(firebaseConfig);
+                    const db = firebase.firestore();
+                    loadData(db);
+                };
+                document.head.appendChild(firestoreScript);
+            };
+            document.head.appendChild(script);
+        }
+
+        async function loadData(db) {
+            try {
+                contentDiv.innerHTML = '<div class="loading">🔄 Carregando informações do evento...</div>';
+                
+                // Buscar evento
+                const eventDoc = await db.collection('events').doc(eventId).get();
+                if (!eventDoc.exists) {
+                    contentDiv.innerHTML = '<div class="error">❌ Evento não encontrado.</div>';
+                    return;
+                }
+                const event = eventDoc.data();
+
+                // Buscar convidado
+                const guestDoc = await db.collection('guests').doc(guestId).get();
+                if (!guestDoc.exists) {
+                    contentDiv.innerHTML = '<div class="error">❌ Convidado não encontrado.</div>';
+                    return;
+                }
+                const guest = guestDoc.data();
+
+                // Se já respondeu
+                if (guest.status === 'confirmado') {
+                    contentDiv.innerHTML = `
+                        <h1>✅ Presença Confirmada!</h1>
+                        <p class="success">Obrigado por confirmar sua presença!</p>
+                        <div class="footer">La Vie Casamentos 💛</div>
+                    `;
+                    return;
+                }
+                if (guest.status === 'recusado') {
+                    contentDiv.innerHTML = `
+                        <h1>📝 Presença Não Confirmada</h1>
+                        <p class="success">Registramos sua resposta. Sentiremos sua falta!</p>
+                        <div class="footer">La Vie Casamentos 💛</div>
+                    `;
+                    return;
+                }
+
+                // Se veio com status na URL
+                if (status === 'confirmado') {
+                    await db.collection('guests').doc(guestId).update({
+                        status: 'confirmado',
+                        responded_at: new Date().toISOString()
+                    });
+                    contentDiv.innerHTML = `
+                        <h1>✅ Presença Confirmada!</h1>
+                        <p class="success">Obrigado! Aguardamos você com muito carinho! 🎊</p>
+                        <div class="footer">La Vie Casamentos 💛</div>
+                    `;
+                    return;
+                }
+                if (status === 'recusado') {
+                    await db.collection('guests').doc(guestId).update({
+                        status: 'recusado',
+                        responded_at: new Date().toISOString()
+                    });
+                    contentDiv.innerHTML = `
+                        <h1>📝 Presença Não Confirmada</h1>
+                        <p class="success">Obrigado por nos avisar!</p>
+                        <div class="footer">La Vie Casamentos 💛</div>
+                    `;
+                    return;
+                }
+
+                // Mostrar opções de confirmação
+                const eventName = event.name || event.couple_names || 'Evento';
+                const eventDate = event.event_date ? new Date(event.event_date).toLocaleDateString('pt-BR') : 'Data a definir';
+                
+                contentDiv.innerHTML = `
+                    <h1>🎊 Convite Especial</h1>
+                    <div class="event-details">
+                        <p><strong>Evento:</strong> ${eventName}</p>
+                        <p><strong>Data:</strong> ${eventDate}</p>
+                        <p><strong>Local:</strong> ${event.venue || 'Local a confirmar'}</p>
+                    </div>
+                    <div class="buttons">
+                        <button class="btn btn-confirm" id="confirmBtn">✅ Confirmar Presença</button>
+                        <button class="btn btn-decline" id="declineBtn">❌ Não poderei comparecer</button>
+                    </div>
+                    <div class="footer">La Vie Casamentos - Transformando sonhos em realidade 💛</div>
+                `;
+
+                document.getElementById('confirmBtn')?.addEventListener('click', async () => {
+                    contentDiv.innerHTML = '<div class="loading">🔄 Processando...</div>';
+                    await db.collection('guests').doc(guestId).update({
+                        status: 'confirmado',
+                        responded_at: new Date().toISOString()
+                    });
+                    contentDiv.innerHTML = `
+                        <h1>✅ Presença Confirmada!</h1>
+                        <p class="success">Obrigado! Aguardamos você! 🎊</p>
+                        <div class="footer">La Vie Casamentos 💛</div>
+                    `;
+                });
+                
+                document.getElementById('declineBtn')?.addEventListener('click', async () => {
+                    contentDiv.innerHTML = '<div class="loading">🔄 Processando...</div>';
+                    await db.collection('guests').doc(guestId).update({
+                        status: 'recusado',
+                        responded_at: new Date().toISOString()
+                    });
+                    contentDiv.innerHTML = `
+                        <h1>📝 Presença Não Confirmada</h1>
+                        <p class="success">Obrigado por nos avisar! 💛</p>
+                        <div class="footer">La Vie Casamentos 💛</div>
+                    `;
+                });
+
+            } catch (error) {
+                console.error('Erro:', error);
+                contentDiv.innerHTML = `<div class="error">❌ Erro: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
