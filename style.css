@@ -1450,3 +1450,238 @@ body.theme-dark .about-logo-img-horizontal { border-color: #888; }
     transform: scale(1.1);
     background: #128C7E;
 }
+/* Botão Calendário no perfil */
+.btn-calendar {
+    transition: all 0.3s ease;
+}
+
+.btn-calendar:hover {
+    background: rgba(255, 215, 0, 0.3) !important;
+    transform: translateY(-2px);
+}
+/* ============================================
+   SOBRE NÓS - ESTILO PROFISSIONAL ACADÊMICO
+   ============================================ */
+
+.about-badge {
+    display: flex;
+    justify-content: center;
+    margin: -1rem auto 2rem auto;
+}
+
+.academic-badge {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    text-transform: uppercase;
+}
+
+.about-academic {
+    grid-column: span 2;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.05));
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.about-academic:hover {
+    border-color: #8b5cf6;
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+}
+
+.about-tech-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+}
+
+.about-tech-list li {
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.about-tech-list li i {
+    width: 25px;
+    color: #8b5cf6;
+    font-size: 1.1rem;
+}
+
+.academic-note {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.about-footer p:last-child {
+    color: #888;
+    letter-spacing: 0.5px;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .about-academic {
+        grid-column: span 1;
+    }
+    
+    .academic-badge {
+        font-size: 0.7rem;
+        padding: 0.4rem 1rem;
+    }
+    
+    .about-tech-list li {
+        font-size: 0.8rem;
+    }
+}
+/* ============================================
+   LOGO NO CABEÇALHO
+   ============================================ */
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.site-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 179, 71, 0.05));
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    transition: all 0.3s;
+}
+
+.site-logo:hover {
+    border-color: rgba(255, 215, 0, 0.5);
+    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.1);
+}
+
+.logo-icon {
+    font-size: 1.8rem;
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.logo-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.logo-subtitle {
+    font-size: 0.55rem;
+    letter-spacing: 3px;
+    color: #ffd700;
+    opacity: 0.8;
+}
+
+/* ============================================
+   BOTÃO DE TEMAS FLUTUANTE COM ARRASTE
+   ============================================ */
+.theme-toggle-btn {
+    position: fixed;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.3s, transform 0.1s;
+    user-select: none;
+}
+
+.theme-toggle-btn:active {
+    cursor: grabbing;
+}
+
+.theme-toggle-btn:hover {
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+}
+
+.theme-icon {
+    font-size: 22px;
+    pointer-events: none;
+}
+
+.theme-tooltip {
+    position: absolute;
+    bottom: 55px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: #ffd700;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+    pointer-events: none;
+}
+
+.theme-toggle-btn:hover .theme-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ============================================
+   RESPONSIVIDADE
+   ============================================ */
+@media (max-width: 768px) {
+    .logo-area {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    .site-logo {
+        padding: 0.3rem 0.8rem;
+    }
+    
+    .logo-icon {
+        font-size: 1.4rem;
+    }
+    
+    .logo-title {
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+    }
+    
+    .logo-subtitle {
+        font-size: 0.45rem;
+        letter-spacing: 2px;
+    }
+    
+    .theme-toggle-btn {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .theme-icon {
+        font-size: 18px;
+    }
+}

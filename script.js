@@ -488,6 +488,77 @@ function getCompatibilityColor(compatibility) {
 }
 
 // ============================================
+// BOTÃO DE TEMAS FLUTUANTE COM ARRASTE
+// ============================================
+
+function loadThemeButtonPosition() {
+    const savedPosition = localStorage.getItem('themeButtonPosition');
+    if (savedPosition) {
+        const position = JSON.parse(savedPosition);
+        const btn = document.querySelector('.theme-toggle-btn');
+        if (btn) {
+            btn.style.left = position.left;
+            btn.style.bottom = position.bottom;
+        }
+    }
+}
+
+function saveThemeButtonPosition(left, bottom) {
+    localStorage.setItem('themeButtonPosition', JSON.stringify({ left, bottom }));
+}
+
+function makeThemeButtonDraggable() {
+    const btn = document.querySelector('.theme-toggle-btn');
+    if (!btn) return;
+    
+    let isDragging = false;
+    let startX, startY, startLeft, startBottom;
+    
+    btn.addEventListener('mousedown', (e) => {
+        if (e.target === btn || btn.contains(e.target)) {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            const left = parseInt(btn.style.left);
+            const bottom = parseInt(btn.style.bottom);
+            startLeft = isNaN(left) ? 20 : left;
+            startBottom = isNaN(bottom) ? 20 : bottom;
+            
+            btn.style.cursor = 'grabbing';
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const deltaX = startX - e.clientX;
+        const deltaY = startY - e.clientY;
+        
+        let newLeft = startLeft - deltaX;
+        let newBottom = startBottom + deltaY;
+        
+        newLeft = Math.max(5, Math.min(newLeft, window.innerWidth - 70));
+        newBottom = Math.max(5, Math.min(newBottom, window.innerHeight - 70));
+        
+        btn.style.left = newLeft + 'px';
+        btn.style.bottom = newBottom + 'px';
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            btn.style.cursor = 'grab';
+            
+            const left = btn.style.left;
+            const bottom = btn.style.bottom;
+            saveThemeButtonPosition(left, bottom);
+        }
+    });
+}
+
+// ============================================
 // SUGESTAO DE FORNECEDORES COM IA
 // ============================================
 
@@ -1019,20 +1090,46 @@ function renderAbout() {
     return `
         <div class="about-section">
             <div class="about-header-horizontal">
-                <div class="about-logo-horizontal"><img src="assets/LOGO3.png" class="about-logo-img-horizontal" onerror="this.src='https://placehold.co/200x200?text=LA+VIE'"></div>
+                <div class="about-logo-horizontal">
+                    <img src="assets/LOGO3.png" class="about-logo-img-horizontal" onerror="this.src='https://placehold.co/200x200?text=LA+VIE'">
+                </div>
                 <div class="about-text-horizontal">
                     <h1 class="about-logo-title">LA VIE</h1>
                     <div class="about-logo-subtitle">CASAMENTOS</div>
-                    <p class="about-tagline">Realizando sonhos ha mais de 10 anos</p>
+                    <p class="about-tagline">Realizando sonhos com tecnologia e inovação</p>
                 </div>
             </div>
-            <div class="about-content">
-                <div class="about-card"><h2><i class="fas fa-heart"></i> Nossa Historia</h2><p>O La Vie Casamentos nasceu do sonho de transformar o planejamento de casamentos em uma experiencia simples, organizada e inesquecivel. Fundada em 2015, nossa plataforma ja ajudou mais de 10.000 casais a realizarem o dia mais especial de suas vidas.</p></div>
-                <div class="about-card"><h2><i class="fas fa-bullseye"></i> Missao</h2><p>Oferecer uma plataforma completa e intuitiva que permita aos casais planejarem seu casamento com tranquilidade, economia e organizacao.</p></div>
-                <div class="about-card"><h2><i class="fas fa-eye"></i> Visao</h2><p>Ser referencia nacional em plataformas de planejamento de casamentos, reconhecida pela inovacao, confiabilidade e por transformar sonhos em realidade.</p></div>
-                <div class="about-card"><h2><i class="fas fa-gem"></i> Valores</h2><ul class="about-values"><li><i class="fas fa-check-circle"></i> Amor pelo que fazemos</li><li><i class="fas fa-check-circle"></i> Compromisso com a excelencia</li><li><i class="fas fa-check-circle"></i> Transparencia e confianca</li><li><i class="fas fa-check-circle"></i> Inovacao constante</li><li><i class="fas fa-check-circle"></i> Respeito aos sonhos de cada casal</li></ul></div>
+            
+            <div class="about-badge">
+                <span class="academic-badge">FEITO PARA TRABALHO ACADÊMICO</span>
             </div>
-            <div class="about-footer"><p>&copy; 2026 La Vie Casamentos. Todos os direitos reservados.</p><p>Transformando sonhos em realidade</p></div>
+                <div class="about-card">
+                    <h2><i class="fas fa-bullseye"></i> Missão</h2>
+                    <p>Oferecer uma plataforma completa e intuitiva que permita aos casais planejarem seu casamento com tranquilidade, economia e organização, conectando tecnologia e emoção em cada detalhe.</p>
+                </div>
+
+                <div class="about-card">
+                    <h2><i class="fas fa-eye"></i> Visão</h2>
+                    <p>Ser referência acadêmica e profissional em plataformas de planejamento de casamentos, reconhecida pela inovação tecnológica, confiabilidade e por transformar sonhos em realidade.</p>
+                </div>
+
+                <div class="about-card">
+                    <h2><i class="fas fa-gem"></i> Valores</h2>
+                    <ul class="about-values">
+                        <li>Inovação tecnológica</li>
+                        <li>Compromisso com a excelência</li>
+                        <li>Transparência e confiança</li>
+                        <li>Empatia com os sonhos dos casais</li>
+                        <li>Aprendizado contínuo</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="about-footer">
+                <p>&copy; 2026 La Vie Casamentos - Trabalho Acadêmico</p>
+                <p>Desenvolvido por estudantes de Análise e Desenvolvimento de Sistemas</p>
+                <p class="academic-note">Transformando sonhos em realidade</p>
+            </div>
         </div>
     `;
 }
@@ -1076,6 +1173,27 @@ async function renderDashboard() {
     const profile = state.user?.profile || {};
     const photoUrl = profile.photo || state.user?.photoURL || '';
     
+    // Criar botão de temas se não existir
+    if (!document.querySelector('.theme-toggle-btn')) {
+        const themeBtn = document.createElement('div');
+        themeBtn.className = 'theme-toggle-btn';
+        themeBtn.innerHTML = '<span class="theme-icon">🎨</span>';
+        themeBtn.style.position = 'fixed';
+        themeBtn.style.left = '20px';
+        themeBtn.style.bottom = '20px';
+        themeBtn.style.cursor = 'grab';
+        themeBtn.style.zIndex = '1000';
+        document.body.appendChild(themeBtn);
+        
+        loadThemeButtonPosition();
+        themeBtn.onclick = (e) => {
+            if (!e.defaultPrevented) {
+                toggleThemeMenu();
+            }
+        };
+        makeThemeButtonDraggable();
+    }
+    
     let modalHtml = '';
     if (state.showEventForm) modalHtml = renderEventForm();
     if (state.showGuestForm) modalHtml = renderGuestForm();
@@ -1088,12 +1206,16 @@ async function renderDashboard() {
                 <button class="tab ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="setActiveTab('dashboard')">Dashboard</button>
                 <button class="tab ${state.activeTab === 'checklist' ? 'active' : ''}" onclick="setActiveTab('checklist')">Checklist</button>
                 <button class="tab ${state.activeTab === 'events' ? 'active' : ''}" onclick="setActiveTab('events')">Eventos</button>
-                <button class="tab ${state.activeTab === 'calendar' ? 'active' : ''}" onclick="setActiveTab('calendar')">Calendario</button>
-                <button class="tab ${state.activeTab === 'about' ? 'active' : ''}" onclick="setActiveTab('about')">Sobre Nos</button>
+                <button class="tab ${state.activeTab === 'about' ? 'active' : ''}" onclick="setActiveTab('about')">Sobre Nós</button>
             </div>
-            <div class="user-info" onclick="setActiveTab('profile')">
-                <div class="profile-pic">${photoUrl ? `<img src="${photoUrl}">` : `<span>${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}</div>
-                <span>${state.user?.username}</span>
+            <div class="user-info">
+                <button class="btn-calendar" onclick="setActiveTab('calendar')" style="background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.3); padding: 0.4rem 1rem; border-radius: 50px; cursor: pointer; color: #ffd700; margin-right: 0.5rem; transition: all 0.3s;">
+                    📅 Calendário
+                </button>
+                <div class="profile-pic" onclick="setActiveTab('profile')">
+                    ${photoUrl ? `<img src="${photoUrl}" alt="Perfil">` : `<span>${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}
+                </div>
+                <span onclick="setActiveTab('profile')" style="cursor: pointer;">${state.user?.username}</span>
                 <button class="btn-logout" onclick="event.stopPropagation(); logout()">Sair</button>
             </div>
         </div>
@@ -1108,10 +1230,10 @@ async function renderDashboard() {
                     </div>
                     <div class="budget-grid">
                         <div class="budget-card used"><h3>Utilizado</h3><div class="budget-value">${formatCurrency(totalGasto)}</div><small>${percentual.toFixed(1)}% do total</small></div>
-                        <div class="budget-card available"><h3>Disponivel</h3><div class="budget-value">${formatCurrency(orcamentoTotal - totalGasto)}</div><small>${(100 - percentual).toFixed(1)}% restante</small></div>
+                        <div class="budget-card available"><h3>Disponível</h3><div class="budget-value">${formatCurrency(orcamentoTotal - totalGasto)}</div><small>${(100 - percentual).toFixed(1)}% restante</small></div>
                     </div>
                     <div class="progress-section">
-                        <h3>Progresso do Orcamento: ${percentual.toFixed(1)}%</h3><div class="progress-bar"><div class="progress-fill" style="width: ${percentual}%"></div></div>
+                        <h3>Progresso do Orçamento: ${percentual.toFixed(1)}%</h3><div class="progress-bar"><div class="progress-fill" style="width: ${percentual}%"></div></div>
                         <h3>Checklist: ${progressoChecklist.toFixed(0)}%</h3><div class="progress-bar"><div class="progress-fill" style="width: ${progressoChecklist}%"></div></div>
                     </div>
                     <div class="charts-grid">
@@ -1392,6 +1514,12 @@ async function loadUserData(user) {
     renderDashboard();
 }
 
+window.completeTask = async (id) => {
+    await toggleTaskComplete(id);
+    state.tasks = state.selectedEvent ? await getUserTasks(state.user.id, state.selectedEvent) : await getUserTasks(state.user.id);
+    renderDashboard();
+};
+
 async function logout() {
     await logoutUser();
     state.user = null;
@@ -1404,12 +1532,6 @@ async function logout() {
     Object.values(state.charts).forEach(c => c?.destroy());
     renderAuth();
 }
-
-window.completeTask = async (id) => {
-    await toggleTaskComplete(id);
-    state.tasks = state.selectedEvent ? await getUserTasks(state.user.id, state.selectedEvent) : await getUserTasks(state.user.id);
-    renderDashboard();
-};
 
 window.setAuthMode = (m) => { state.authMode = m; renderAuth(); };
 window.setActiveTab = (tab) => { state.activeTab = tab; renderDashboard(); };
