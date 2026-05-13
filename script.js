@@ -1099,10 +1099,6 @@ function renderAbout() {
                     <p class="about-tagline">Realizando sonhos com tecnologia e inovação</p>
                 </div>
             </div>
-            
-            <div class="about-badge">
-                <span class="academic-badge">FEITO PARA TRABALHO ACADÊMICO</span>
-            </div>
                 <div class="about-card">
                     <h2><i class="fas fa-bullseye"></i> Missão</h2>
                     <p>Oferecer uma plataforma completa e intuitiva que permita aos casais planejarem seu casamento com tranquilidade, economia e organização, conectando tecnologia e emoção em cada detalhe.</p>
@@ -1137,23 +1133,192 @@ function renderAbout() {
 // ============================================
 // FUNCOES DE TEMAS
 // ============================================
+// ============================================
+// FUNCOES DE TEMAS - VERSÃO CORRIGIDA
+// ============================================
+
+// Criar o botão e o menu de temas
+function createThemeUI() {
+    // Remover se já existir
+    const existingBtn = document.querySelector('.theme-toggle-btn');
+    if (existingBtn) existingBtn.remove();
+    const existingMenu = document.getElementById('themeMenu');
+    if (existingMenu) existingMenu.remove();
+    
+    // Criar botão flutuante
+    const themeBtn = document.createElement('div');
+    themeBtn.className = 'theme-toggle-btn';
+    themeBtn.innerHTML = '<span class="theme-icon">🎨</span>';
+    
+    // Aplicar estilos diretamente para garantir
+    themeBtn.style.position = 'fixed';
+    themeBtn.style.bottom = '20px';
+    themeBtn.style.left = '20px';
+    themeBtn.style.width = '50px';
+    themeBtn.style.height = '50px';
+    themeBtn.style.borderRadius = '50%';
+    themeBtn.style.background = 'linear-gradient(135deg, #ffd700, #ffb347)';
+    themeBtn.style.display = 'flex';
+    themeBtn.style.alignItems = 'center';
+    themeBtn.style.justifyContent = 'center';
+    themeBtn.style.cursor = 'pointer';
+    themeBtn.style.zIndex = '9999';
+    themeBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+    themeBtn.style.transition = 'all 0.3s';
+    
+    // Tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'theme-tooltip';
+    tooltip.textContent = 'Temas';
+    tooltip.style.position = 'absolute';
+    tooltip.style.bottom = '60px';
+    tooltip.style.left = '50%';
+    tooltip.style.transform = 'translateX(-50%)';
+    tooltip.style.background = 'rgba(0, 0, 0, 0.8)';
+    tooltip.style.color = '#ffd700';
+    tooltip.style.padding = '4px 8px';
+    tooltip.style.borderRadius = '8px';
+    tooltip.style.fontSize = '10px';
+    tooltip.style.whiteSpace = 'nowrap';
+    tooltip.style.opacity = '0';
+    tooltip.style.visibility = 'hidden';
+    tooltip.style.transition = 'all 0.3s';
+    tooltip.style.pointerEvents = 'none';
+    themeBtn.appendChild(tooltip);
+    
+    themeBtn.addEventListener('mouseenter', () => {
+        tooltip.style.opacity = '1';
+        tooltip.style.visibility = 'visible';
+    });
+    themeBtn.addEventListener('mouseleave', () => {
+        tooltip.style.opacity = '0';
+        tooltip.style.visibility = 'hidden';
+    });
+    
+    // Criar o menu de temas
+    const themeMenu = document.createElement('div');
+    themeMenu.id = 'themeMenu';
+    themeMenu.style.position = 'fixed';
+    themeMenu.style.bottom = '80px';
+    themeMenu.style.left = '20px';
+    themeMenu.style.background = '#1a1a2e';
+    themeMenu.style.borderRadius = '16px';
+    themeMenu.style.padding = '1rem';
+    themeMenu.style.minWidth = '200px';
+    themeMenu.style.zIndex = '10000';
+    themeMenu.style.border = '1px solid rgba(255, 215, 0, 0.3)';
+    themeMenu.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.4)';
+    themeMenu.style.display = 'none';
+    
+    themeMenu.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255, 215, 0, 0.2);">
+        <h3 style="color: #ffd700; margin: 0; font-size: 0.9rem;">Escolha um Tema</h3>
+        <button id="closeThemeMenu" style="background: none; border: none; color: #888; cursor: pointer; font-size: 1.2rem;">&times;</button>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <div class="theme-option" data-theme="gold" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 12px; cursor: pointer; transition: all 0.3s; color: #fff;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #ffd700, #ffb347); border: 1px solid rgba(255,255,255,0.2);"></div>
+            <span>Dourado (Padrão)</span>
+        </div>
+        <div class="theme-option" data-theme="rose" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 12px; cursor: pointer; transition: all 0.3s; color: #fff;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #ff69b4, #ff1493); border: 1px solid rgba(255,255,255,0.2);"></div>
+            <span>Rosa</span>
+        </div>
+        <div class="theme-option" data-theme="blue" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 12px; cursor: pointer; transition: all 0.3s; color: #fff;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #00bfff, #1e90ff); border: 1px solid rgba(255,255,255,0.2);"></div>
+            <span>Azul</span>
+        </div>
+        <div class="theme-option" data-theme="green" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 12px; cursor: pointer; transition: all 0.3s; color: #fff;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #32cd32, #228b22); border: 1px solid rgba(255,255,255,0.2);"></div>
+            <span>Verde</span>
+        </div>
+        <div class="theme-option" data-theme="purple" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 12px; cursor: pointer; transition: all 0.3s; color: #fff;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #9370db, #8a2be2); border: 1px solid rgba(255,255,255,0.2);"></div>
+            <span>Roxo</span>
+        </div>
+        <div class="theme-option" data-theme="dark" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; border-radius: 12px; cursor: pointer; transition: all 0.3s; color: #fff;">
+            <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #2c3e50, #1a1a2e); border: 1px solid rgba(255,255,255,0.2);"></div>
+            <span>Escuro</span>
+        </div>
+    </div>
+`;
+    
+    document.body.appendChild(themeBtn);
+    document.body.appendChild(themeMenu);
+    
+    // Hover effect no botão
+    themeBtn.addEventListener('mouseenter', () => {
+        themeBtn.style.transform = 'scale(1.1)';
+        themeBtn.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.4)';
+    });
+    themeBtn.addEventListener('mouseleave', () => {
+        themeBtn.style.transform = 'scale(1)';
+        themeBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+    });
+    
+    // Evento do botão para abrir/fechar menu
+    themeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (themeMenu.style.display === 'none' || themeMenu.style.display === '') {
+            themeMenu.style.display = 'block';
+        } else {
+            themeMenu.style.display = 'none';
+        }
+    });
+    
+    // Fechar menu
+    const closeBtn = document.getElementById('closeThemeMenu');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            themeMenu.style.display = 'none';
+        });
+    }
+    
+    // Eventos das opções de tema
+    document.querySelectorAll('.theme-option').forEach(option => {
+        option.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(255, 215, 0, 0.1)';
+        });
+        option.addEventListener('mouseleave', function() {
+            this.style.background = 'transparent';
+        });
+        option.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const theme = this.dataset.theme;
+            applyTheme(theme);
+            themeMenu.style.display = 'none';
+        });
+    });
+    
+    // Fechar ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!themeBtn.contains(e.target) && !themeMenu.contains(e.target)) {
+            themeMenu.style.display = 'none';
+        }
+    });
+}
 
 function toggleThemeMenu() {
     const menu = document.getElementById('themeMenu');
-    if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    if (menu) {
+        menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
 }
 
 function applyTheme(theme) {
     document.body.classList.remove('theme-rose', 'theme-blue', 'theme-green', 'theme-purple', 'theme-dark');
-    if (theme !== 'gold') document.body.classList.add(`theme-${theme}`);
+    if (theme !== 'gold') {
+        document.body.classList.add(`theme-${theme}`);
+    }
     localStorage.setItem('selectedTheme', theme);
-    const menu = document.getElementById('themeMenu');
-    if (menu) menu.style.display = 'none';
 }
 
 function loadSavedTheme() {
     const savedTheme = localStorage.getItem('selectedTheme');
-    if (savedTheme && savedTheme !== 'gold') document.body.classList.add(`theme-${savedTheme}`);
+    if (savedTheme && savedTheme !== 'gold') {
+        document.body.classList.add(`theme-${savedTheme}`);
+    }
 }
 
 window.toggleThemeMenu = toggleThemeMenu;
@@ -1172,27 +1337,6 @@ async function renderDashboard() {
     const progressoChecklist = getProgressoChecklist();
     const profile = state.user?.profile || {};
     const photoUrl = profile.photo || state.user?.photoURL || '';
-    
-    // Criar botão de temas se não existir
-    if (!document.querySelector('.theme-toggle-btn')) {
-        const themeBtn = document.createElement('div');
-        themeBtn.className = 'theme-toggle-btn';
-        themeBtn.innerHTML = '<span class="theme-icon">🎨</span>';
-        themeBtn.style.position = 'fixed';
-        themeBtn.style.left = '20px';
-        themeBtn.style.bottom = '20px';
-        themeBtn.style.cursor = 'grab';
-        themeBtn.style.zIndex = '1000';
-        document.body.appendChild(themeBtn);
-        
-        loadThemeButtonPosition();
-        themeBtn.onclick = (e) => {
-            if (!e.defaultPrevented) {
-                toggleThemeMenu();
-            }
-        };
-        makeThemeButtonDraggable();
-    }
     
     let modalHtml = '';
     if (state.showEventForm) modalHtml = renderEventForm();
@@ -1557,5 +1701,7 @@ window.closeTaskModal = () => { state.showTaskForm = false; state.editingTask = 
 window.deleteTaskConfirm = async (id) => { if (confirm('Excluir tarefa?')) { await deleteTask(id); state.tasks = state.selectedEvent ? await getUserTasks(state.user.id, state.selectedEvent) : await getUserTasks(state.user.id); renderDashboard(); } };
 window.logout = logout;
 
+
 loadSavedTheme();
+createThemeUI();
 checkAuthState();
