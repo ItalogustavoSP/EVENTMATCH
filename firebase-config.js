@@ -197,41 +197,45 @@ export function onAuthChange(callback) {
 // REPOSITORIO DE FORNECEDORES (IA)
 // ============================================
 
+// ============================================
+// REPOSITORIO DE FORNECEDORES (IA)
+// ============================================
+
 export const SUPPLIERS_DB = {
     buffet: [
-        { id: "buf1", name: "Buffet Gourmet & Cia", category: "buffet", priceRange: "R$ 80-120 por pessoa", rating: 4.8, tags: ["casamento", "gourmet", "tradicional"], icon: "B" },
-        { id: "buf2", name: "Sabor & Arte Buffet", category: "buffet", priceRange: "R$ 60-90 por pessoa", rating: 4.5, tags: ["rustico", "campestre", "natural"], icon: "B" },
-        { id: "buf3", name: "Delicias do Chef", category: "buffet", priceRange: "R$ 100-150 por pessoa", rating: 4.9, tags: ["luxo", "moderno", "internacional"], icon: "B" },
-        { id: "buf4", name: "Buffet Colonial", category: "buffet", priceRange: "R$ 50-80 por pessoa", rating: 4.3, tags: ["tradicional", "caseiro", "familiar"], icon: "B" },
-        { id: "buf5", name: "Chef no Evento", category: "buffet", priceRange: "R$ 90-130 por pessoa", rating: 4.7, tags: ["contemporaneo", "fusion", "criativo"], icon: "B" }
+        { id: "buf1", name: "Buffet Gourmet & Cia", category: "buffet", priceRange: "R$ 80-120 por pessoa", rating: 4.8, tags: ["classico", "gourmet", "tradicional"], availability: 95, icon: "🍽️" },
+        { id: "buf2", name: "Sabor & Arte Buffet", category: "buffet", priceRange: "R$ 60-90 por pessoa", rating: 4.5, tags: ["rustico", "campestre", "natural"], availability: 85, icon: "🍽️" },
+        { id: "buf3", name: "Delicias do Chef", category: "buffet", priceRange: "R$ 100-150 por pessoa", rating: 4.9, tags: ["luxo", "moderno", "internacional"], availability: 70, icon: "🍽️" },
+        { id: "buf4", name: "Buffet Colonial", category: "buffet", priceRange: "R$ 50-80 por pessoa", rating: 4.3, tags: ["tradicional", "caseiro", "familiar"], availability: 98, icon: "🍽️" },
+        { id: "buf5", name: "Chef no Evento", category: "buffet", priceRange: "R$ 90-130 por pessoa", rating: 4.7, tags: ["contemporaneo", "fusion", "criativo"], availability: 88, icon: "🍽️" }
     ],
     fotografia: [
-        { id: "fot1", name: "Fotografia Memorias Eternas", category: "fotografia", priceRange: "R$ 3.000 - 5.000", rating: 4.9, tags: ["classico", "romantico", "ensaio"], icon: "F" },
-        { id: "fot2", name: "Click & Love Estudio", category: "fotografia", priceRange: "R$ 4.000 - 7.000", rating: 4.8, tags: ["moderno", "espontaneo", "documental"], icon: "F" },
-        { id: "fot3", name: "Golden Moments Photo", category: "fotografia", priceRange: "R$ 5.000 - 10.000", rating: 5.0, tags: ["luxo", "editorial", "requintado"], icon: "F" },
-        { id: "fot4", name: "Fotografia Luz & Amor", category: "fotografia", priceRange: "R$ 2.500 - 4.500", rating: 4.6, tags: ["natural", "campestre", "luz natural"], icon: "F" },
-        { id: "fot5", name: "Estudio Criativo", category: "fotografia", priceRange: "R$ 3.500 - 6.000", rating: 4.7, tags: ["criativo", "diferente", "arte"], icon: "F" }
+        { id: "fot1", name: "Fotografia Memorias Eternas", category: "fotografia", priceRange: "R$ 3.000 - 5.000", rating: 4.9, tags: ["classico", "romantico", "ensaio"], availability: 80, icon: "📷" },
+        { id: "fot2", name: "Click & Love Estudio", category: "fotografia", priceRange: "R$ 4.000 - 7.000", rating: 4.8, tags: ["moderno", "espontaneo", "documental"], availability: 75, icon: "📷" },
+        { id: "fot3", name: "Golden Moments Photo", category: "fotografia", priceRange: "R$ 5.000 - 10.000", rating: 5.0, tags: ["luxo", "editorial", "requintado"], availability: 60, icon: "📷" },
+        { id: "fot4", name: "Fotografia Luz & Amor", category: "fotografia", priceRange: "R$ 2.500 - 4.500", rating: 4.6, tags: ["natural", "campestre", "luz natural"], availability: 92, icon: "📷" },
+        { id: "fot5", name: "Estudio Criativo", category: "fotografia", priceRange: "R$ 3.500 - 6.000", rating: 4.7, tags: ["criativo", "diferente", "arte"], availability: 85, icon: "📷" }
     ],
     decoracao: [
-        { id: "dec1", name: "Decoracoes dos Sonhos", category: "decoracao", priceRange: "R$ 5.000 - 10.000", rating: 4.7, tags: ["classico", "elegante", "floral"], icon: "D" },
-        { id: "dec2", name: "Arte & Estilo Eventos", category: "decoracao", priceRange: "R$ 8.000 - 15.000", rating: 4.9, tags: ["moderno", "minimalista", "design"], icon: "D" },
-        { id: "dec3", name: "Rustico Charm", category: "decoracao", priceRange: "R$ 4.000 - 8.000", rating: 4.8, tags: ["rustico", "boho", "natural"], icon: "D" },
-        { id: "dec4", name: "Luxo & Sofisticacao", category: "decoracao", priceRange: "R$ 10.000 - 20.000", rating: 5.0, tags: ["luxo", "chique", "requintado"], icon: "D" },
-        { id: "dec5", name: "Decore Seu Dia", category: "decoracao", priceRange: "R$ 3.000 - 6.000", rating: 4.5, tags: ["simples", "elegante", "acessivel"], icon: "D" }
+        { id: "dec1", name: "Decoracoes dos Sonhos", category: "decoracao", priceRange: "R$ 5.000 - 10.000", rating: 4.7, tags: ["classico", "elegante", "floral"], availability: 78, icon: "🎨" },
+        { id: "dec2", name: "Arte & Estilo Eventos", category: "decoracao", priceRange: "R$ 8.000 - 15.000", rating: 4.9, tags: ["moderno", "minimalista", "design"], availability: 65, icon: "🎨" },
+        { id: "dec3", name: "Rustico Charm", category: "decoracao", priceRange: "R$ 4.000 - 8.000", rating: 4.8, tags: ["rustico", "boho", "natural"], availability: 90, icon: "🎨" },
+        { id: "dec4", name: "Luxo & Sofisticacao", category: "decoracao", priceRange: "R$ 10.000 - 20.000", rating: 5.0, tags: ["luxo", "chique", "requintado"], availability: 55, icon: "🎨" },
+        { id: "dec5", name: "Decore Seu Dia", category: "decoracao", priceRange: "R$ 3.000 - 6.000", rating: 4.5, tags: ["simples", "elegante", "acessivel"], availability: 95, icon: "🎨" }
     ],
     musica: [
-        { id: "mus1", name: "Banda Alma & Coracao", category: "musica", priceRange: "R$ 3.000 - 5.000", rating: 4.8, tags: ["classico", "romantico", "ao vivo"], icon: "M" },
-        { id: "mus2", name: "DJ EletroVibe", category: "musica", priceRange: "R$ 2.000 - 4.000", rating: 4.6, tags: ["moderno", "eletronico", "pista"], icon: "M" },
-        { id: "mus3", name: "Orquestra Encanto", category: "musica", priceRange: "R$ 5.000 - 10.000", rating: 4.9, tags: ["luxo", "elegante", "classica"], icon: "M" },
-        { id: "mus4", name: "Trio Instrumental", category: "musica", priceRange: "R$ 1.500 - 3.000", rating: 4.5, tags: ["acustico", "intimo", "jazz"], icon: "M" },
-        { id: "mus5", name: "Vocal Harmony", category: "musica", priceRange: "R$ 2.500 - 4.500", rating: 4.7, tags: ["vocal", "harmonia", "emocional"], icon: "M" }
+        { id: "mus1", name: "Banda Alma & Coracao", category: "musica", priceRange: "R$ 3.000 - 5.000", rating: 4.8, tags: ["classico", "romantico", "ao vivo"], availability: 70, icon: "🎵" },
+        { id: "mus2", name: "DJ EletroVibe", category: "musica", priceRange: "R$ 2.000 - 4.000", rating: 4.6, tags: ["moderno", "eletronico", "pista"], availability: 85, icon: "🎵" },
+        { id: "mus3", name: "Orquestra Encanto", category: "musica", priceRange: "R$ 5.000 - 10.000", rating: 4.9, tags: ["luxo", "elegante", "classica"], availability: 60, icon: "🎵" },
+        { id: "mus4", name: "Trio Instrumental", category: "musica", priceRange: "R$ 1.500 - 3.000", rating: 4.5, tags: ["acustico", "intimo", "jazz"], availability: 92, icon: "🎵" },
+        { id: "mus5", name: "Vocal Harmony", category: "musica", priceRange: "R$ 2.500 - 4.500", rating: 4.7, tags: ["vocal", "harmonia", "emocional"], availability: 80, icon: "🎵" }
     ],
     espaco: [
-        { id: "esp1", name: "Espaco Villa Serena", category: "espaco", priceRange: "R$ 10.000 - 20.000", rating: 4.7, tags: ["campestre", "rustico", "jardim"], icon: "E" },
-        { id: "esp2", name: "Salao Nobre Palace", category: "espaco", priceRange: "R$ 15.000 - 30.000", rating: 4.9, tags: ["luxo", "classico", "imponente"], icon: "E" },
-        { id: "esp3", name: "Fazenda Encantada", category: "espaco", priceRange: "R$ 8.000 - 15.000", rating: 4.8, tags: ["rustico", "campo", "natureza"], icon: "E" },
-        { id: "esp4", name: "Rooftop Vista Linda", category: "espaco", priceRange: "R$ 12.000 - 25.000", rating: 4.6, tags: ["moderno", "vista", "urbano"], icon: "E" },
-        { id: "esp5", name: "Salao Industrial Chic", category: "espaco", priceRange: "R$ 7.000 - 12.000", rating: 4.5, tags: ["industrial", "moderno", "descolado"], icon: "E" }
+        { id: "esp1", name: "Espaco Villa Serena", category: "espaco", priceRange: "R$ 10.000 - 20.000", rating: 4.7, tags: ["campestre", "rustico", "jardim"], availability: 75, icon: "🏠" },
+        { id: "esp2", name: "Salao Nobre Palace", category: "espaco", priceRange: "R$ 15.000 - 30.000", rating: 4.9, tags: ["luxo", "classico", "imponente"], availability: 60, icon: "🏠" },
+        { id: "esp3", name: "Fazenda Encantada", category: "espaco", priceRange: "R$ 8.000 - 15.000", rating: 4.8, tags: ["rustico", "campo", "natureza"], availability: 82, icon: "🏠" },
+        { id: "esp4", name: "Rooftop Vista Linda", category: "espaco", priceRange: "R$ 12.000 - 25.000", rating: 4.6, tags: ["moderno", "vista", "urbano"], availability: 70, icon: "🏠" },
+        { id: "esp5", name: "Salao Industrial Chic", category: "espaco", priceRange: "R$ 7.000 - 12.000", rating: 4.5, tags: ["industrial", "moderno", "descolado"], availability: 88, icon: "🏠" }
     ]
 };
 
@@ -305,133 +309,270 @@ export async function createDefaultTasksForEvent(userId, eventId) {
 // ============================================
 // IA DE SUGESTAO DE FORNECEDORES
 // ============================================
+// ============================================
+// IA DE SUGESTAO DE FORNECEDORES - CORRIGIDA
+// ============================================
+
+// ============================================
+// IA DE SUGESTAO DE FORNECEDORES - COM PERFIL DE PREÇO POR TEMA
+// ============================================
 
 export function suggestSuppliersIA(eventTheme, budget) {
     var suggestions = [];
     
-    var themeTags = {
-        "classico": ["classico", "elegante", "tradicional", "romantico"],
-        "moderno": ["moderno", "contemporaneo", "minimalista", "design"],
-        "rustico": ["rustico", "campestre", "natural", "boho"],
-        "luxo": ["luxo", "chique", "requintado", "imponente"],
-        "romantico": ["romantico", "emocional", "floral", "acolhedor"],
-        "praia": ["praia", "mar", "natural", "areia"],
-        "industrial": ["industrial", "moderno", "descolado", "urbano"]
+    // Perfil de preço por tema
+    var themePriceProfile = {
+        "classico": { nivel: "medio", multiplicador: 0.8, descricao: "Tradicional e elegante" },
+        "moderno": { nivel: "medio-alto", multiplicador: 1.0, descricao: "Contemporâneo e minimalista" },
+        "rustico": { nivel: "baixo-medio", multiplicador: 0.6, descricao: "Campestre e aconchegante" },
+        "luxo": { nivel: "alto", multiplicador: 1.5, descricao: "Sofisticado e requintado" },
+        "romantico": { nivel: "medio", multiplicador: 0.85, descricao: "Delicado e emocional" },
+        "praia": { nivel: "medio", multiplicador: 0.9, descricao: "Descontraído e natural" },
+        "industrial": { nivel: "medio", multiplicador: 0.9, descricao: "Urbano e descolado" },
+        "vintage": { nivel: "medio", multiplicador: 0.85, descricao: "Retro e nostálgico" },
+        "boho": { nivel: "baixo-medio", multiplicador: 0.7, descricao: "Artístico e livre" },
+        "gotico": { nivel: "medio", multiplicador: 0.9, descricao: "Misterioso e elegante" }
     };
     
-    var tags = themeTags[eventTheme?.toLowerCase()] || ["classico", "elegante", "moderno"];
-    
-    function parsePriceRange(priceRange) {
-        var numbers = priceRange.match(/\d+/g);
-        if (!numbers) return 5000;
-        var sum = 0;
-        for (var i = 0; i < numbers.length; i++) {
-            sum = sum + parseInt(numbers[i], 10);
+    // Fornecedores com faixas de preço por categoria e perfil
+    const SUPPLIERS_BY_THEME = {
+        // Fornecedores para tema CLÁSSICO (preço médio)
+        classico: {
+            buffet: [
+                { id: "buf1", name: "Buffet Tradição & Elegância", priceRange: "R$ 70-100 por pessoa", rating: 4.7, tags: ["classico", "tradicional", "elegante"], availability: 90 },
+                { id: "buf2", name: "Sabores da Vovó", priceRange: "R$ 50-80 por pessoa", rating: 4.5, tags: ["caseiro", "tradicional", "familiar"], availability: 95 },
+                { id: "buf3", name: "Buffet Nobreza", priceRange: "R$ 80-120 por pessoa", rating: 4.8, tags: ["classico", "requintado", "gourmet"], availability: 85 }
+            ],
+            fotografia: [
+                { id: "fot1", name: "Fotografia Classic Moments", priceRange: "R$ 2.500 - 4.000", rating: 4.7, tags: ["classico", "romantico", "posado"], availability: 88 },
+                { id: "fot2", name: "Estudio Luz & Sombra", priceRange: "R$ 2.000 - 3.500", rating: 4.5, tags: ["tradicional", "estudio", "elegante"], availability: 92 }
+            ],
+            decoracao: [
+                { id: "dec1", name: "Decorações Clássicas", priceRange: "R$ 4.000 - 7.000", rating: 4.6, tags: ["classico", "floral", "elegante"], availability: 85 },
+                { id: "dec2", name: "Arte & Flores", priceRange: "R$ 3.500 - 6.000", rating: 4.5, tags: ["romantico", "floral", "delicado"], availability: 90 }
+            ],
+            musica: [
+                { id: "mus1", name: "Orquestra de Câmara", priceRange: "R$ 3.000 - 5.000", rating: 4.8, tags: ["classico", "instrumental", "elegante"], availability: 75 },
+                { id: "mus2", name: "Banda Clássica", priceRange: "R$ 2.500 - 4.000", rating: 4.6, tags: ["classico", "ao vivo", "romantico"], availability: 80 }
+            ],
+            espaco: [
+                { id: "esp1", name: "Salão Nobre Classic", priceRange: "R$ 8.000 - 15.000", rating: 4.7, tags: ["classico", "elegante", "imponente"], availability: 82 },
+                { id: "esp2", name: "Espaço Villa Bella", priceRange: "R$ 7.000 - 12.000", rating: 4.5, tags: ["campestre", "classico", "acolhedor"], availability: 88 }
+            ]
+        },
+        
+        // Fornecedores para tema LUXO (preço alto)
+        luxo: {
+            buffet: [
+                { id: "buf1", name: "Buffet Imperial", priceRange: "R$ 150-250 por pessoa", rating: 5.0, tags: ["luxo", "gourmet", "internacional"], availability: 60 },
+                { id: "buf2", name: "Chef Estrela Michelin", priceRange: "R$ 200-350 por pessoa", rating: 5.0, tags: ["luxo", "requintado", "exclusivo"], availability: 50 },
+                { id: "buf3", name: "Buffet Palace", priceRange: "R$ 120-200 por pessoa", rating: 4.9, tags: ["luxo", "elegante", "sofisticado"], availability: 70 }
+            ],
+            fotografia: [
+                { id: "fot1", name: "Vogue Photography", priceRange: "R$ 8.000 - 15.000", rating: 5.0, tags: ["luxo", "editorial", "exclusivo"], availability: 55 },
+                { id: "fot2", name: "Golden Lens Studio", priceRange: "R$ 6.000 - 12.000", rating: 4.9, tags: ["luxo", "requintado", "premium"], availability: 65 }
+            ],
+            decoracao: [
+                { id: "dec1", name: "Decorações Reais", priceRange: "R$ 15.000 - 30.000", rating: 5.0, tags: ["luxo", "chique", "exclusivo"], availability: 50 },
+                { id: "dec2", name: "Eventos Premium", priceRange: "R$ 12.000 - 25.000", rating: 4.9, tags: ["luxo", "requintado", "design"], availability: 60 }
+            ],
+            musica: [
+                { id: "mus1", name: "Orquestra Sinfônica", priceRange: "R$ 8.000 - 15.000", rating: 5.0, tags: ["luxo", "classica", "imponente"], availability: 55 },
+                { id: "mus2", name: "Artista Internacional", priceRange: "R$ 10.000 - 20.000", rating: 5.0, tags: ["luxo", "exclusivo", "famoso"], availability: 40 }
+            ],
+            espaco: [
+                { id: "esp1", name: "Palácio dos Eventos", priceRange: "R$ 25.000 - 50.000", rating: 5.0, tags: ["luxo", "imponente", "exclusivo"], availability: 45 },
+                { id: "esp2", name: "Hotel 5 Estrelas", priceRange: "R$ 20.000 - 40.000", rating: 4.9, tags: ["luxo", "requintado", "vista"], availability: 55 }
+            ]
+        },
+        
+        // Fornecedores para tema RÚSTICO (preço baixo-médio)
+        rustico: {
+            buffet: [
+                { id: "buf1", name: "Buffet Campestre", priceRange: "R$ 45-70 por pessoa", rating: 4.5, tags: ["rustico", "caseiro", "natural"], availability: 95 },
+                { id: "buf2", name: "Sabores do Campo", priceRange: "R$ 40-60 por pessoa", rating: 4.4, tags: ["rustico", "familiar", "acolhedor"], availability: 98 }
+            ],
+            fotografia: [
+                { id: "fot1", name: "Foto Natural", priceRange: "R$ 1.800 - 3.000", rating: 4.5, tags: ["rustico", "natural", "espontaneo"], availability: 92 },
+                { id: "fot2", name: "Luz Natural Studio", priceRange: "R$ 1.500 - 2.800", rating: 4.4, tags: ["rustico", "campestre", "leve"], availability: 95 }
+            ],
+            decoracao: [
+                { id: "dec1", name: "Decoração Rústica", priceRange: "R$ 3.000 - 5.000", rating: 4.6, tags: ["rustico", "natural", "boho"], availability: 90 },
+                { id: "dec2", name: "Arte Campestre", priceRange: "R$ 2.500 - 4.500", rating: 4.5, tags: ["rustico", "artesanal", "acolhedor"], availability: 93 }
+            ],
+            musica: [
+                { id: "mus1", name: "Música ao Pé do Fogo", priceRange: "R$ 1.500 - 3.000", rating: 4.5, tags: ["rustico", "acustico", "violao"], availability: 88 },
+                { id: "mus2", name: "Banda Country", priceRange: "R$ 2.000 - 3.500", rating: 4.6, tags: ["rustico", "animado", "campestre"], availability: 85 }
+            ],
+            espaco: [
+                { id: "esp1", name: "Fazenda Paraíso", priceRange: "R$ 5.000 - 10.000", rating: 4.7, tags: ["rustico", "campo", "natureza"], availability: 85 },
+                { id: "esp2", name: "Sítio Encantado", priceRange: "R$ 4.000 - 8.000", rating: 4.5, tags: ["rustico", "familiar", "acolhedor"], availability: 90 }
+            ]
+        },
+        
+        // Fornecedores para tema MODERNO (preço médio-alto)
+        moderno: {
+            buffet: [
+                { id: "buf1", name: "Buffet Contemporâneo", priceRange: "R$ 90-140 por pessoa", rating: 4.8, tags: ["moderno", "fusion", "criativo"], availability: 85 },
+                { id: "buf2", name: "Chef Molecular", priceRange: "R$ 100-160 por pessoa", rating: 4.9, tags: ["moderno", "inovador", "experimental"], availability: 75 }
+            ],
+            fotografia: [
+                { id: "fot1", name: "Urban Photo", priceRange: "R$ 3.500 - 6.000", rating: 4.8, tags: ["moderno", "urbano", "criativo"], availability: 80 },
+                { id: "fot2", name: "Estudio Contemporâneo", priceRange: "R$ 4.000 - 7.000", rating: 4.7, tags: ["moderno", "design", "arrojado"], availability: 75 }
+            ],
+            decoracao: [
+                { id: "dec1", name: "Design Minimalista", priceRange: "R$ 6.000 - 12.000", rating: 4.8, tags: ["moderno", "minimalista", "design"], availability: 78 },
+                { id: "dec2", name: "Arte Geométrica", priceRange: "R$ 5.000 - 10.000", rating: 4.7, tags: ["moderno", "geometrico", "colorido"], availability: 82 }
+            ],
+            musica: [
+                { id: "mus1", name: "DJ Eletrônico", priceRange: "R$ 3.000 - 6.000", rating: 4.7, tags: ["moderno", "eletronico", "pista"], availability: 80 },
+                { id: "mus2", name: "Banda Indie", priceRange: "R$ 3.500 - 6.500", rating: 4.8, tags: ["moderno", "alternativo", "descolado"], availability: 75 }
+            ],
+            espaco: [
+                { id: "esp1", name: "Galeria Industrial", priceRange: "R$ 10.000 - 18.000", rating: 4.8, tags: ["moderno", "industrial", "design"], availability: 70 },
+                { id: "esp2", name: "Rooftop Vista", priceRange: "R$ 12.000 - 22.000", rating: 4.7, tags: ["moderno", "vista", "urbano"], availability: 65 }
+            ]
         }
-        return sum / numbers.length;
-    }
+    };
     
-    for (var category in SUPPLIERS_DB) {
-        if (SUPPLIERS_DB.hasOwnProperty(category)) {
-            var suppliers = SUPPLIERS_DB[category];
-            var categorySuggestions = [];
+    // Perfil de preço do tema
+    var priceProfile = themePriceProfile[eventTheme?.toLowerCase()] || themePriceProfile.classico;
+    
+    // Selecionar fornecedores baseado no tema
+    var themeSuppliers = SUPPLIERS_BY_THEME[eventTheme?.toLowerCase()] || SUPPLIERS_BY_THEME.classico;
+    
+    // Para cada categoria
+    for (var category in themeSuppliers) {
+        if (themeSuppliers.hasOwnProperty(category)) {
+            var suppliers = themeSuppliers[category];
+            
             for (var j = 0; j < suppliers.length; j++) {
                 var supplier = suppliers[j];
                 var score = 0;
-                var tagMatches = 0;
-                for (var k = 0; k < supplier.tags.length; k++) {
-                    for (var t = 0; t < tags.length; t++) {
-                        if (supplier.tags[k] === tags[t]) {
-                            tagMatches++;
-                        }
+                
+                // 1. Compatibilidade de tema (peso 40%)
+                score += 30;
+                
+                // 2. Rating (peso 30%)
+                var ratingScore = (supplier.rating - 4) * 20;
+                score += Math.max(0, ratingScore);
+                
+                // 3. Compatibilidade de orçamento (peso 30%)
+                if (budget > 0) {
+                    var priceValue = parsePriceRange(supplier.priceRange);
+                    var orcamentoAjustado = budget * priceProfile.multiplicador;
+                    var budgetRatio = priceValue / orcamentoAjustado;
+                    
+                    if (budgetRatio <= 0.5) {
+                        score += 30;
+                    } else if (budgetRatio <= 0.8) {
+                        score += 25;
+                    } else if (budgetRatio <= 1.2) {
+                        score += 20;
+                    } else if (budgetRatio <= 1.5) {
+                        score += 10;
+                    } else {
+                        score += 5;
                     }
                 }
-                score += tagMatches * 2;
-                score += (supplier.rating - 4) * 10;
-                var priceValue = parsePriceRange(supplier.priceRange);
-                if (budget >= priceValue * 0.5 && budget <= priceValue * 2) {
-                    score += 5;
-                } else if (budget >= priceValue * 0.3 && budget <= priceValue * 3) {
-                    score += 2;
-                }
-                var compatibility = Math.min(100, Math.round(score * 10));
-                categorySuggestions.push({
+                
+                // 4. Disponibilidade
+                score += (supplier.availability / 100) * 15;
+                
+                var compatibility = Math.min(100, Math.max(0, Math.round(score)));
+                
+                // Definir ícone baseado na categoria
+                var icon = "";
+                if (category === "buffet") icon = "🍽️";
+                else if (category === "fotografia") icon = "📷";
+                else if (category === "decoracao") icon = "🎨";
+                else if (category === "musica") icon = "🎵";
+                else if (category === "espaco") icon = "🏠";
+                
+                suggestions.push({
                     id: supplier.id,
                     name: supplier.name,
-                    category: supplier.category,
+                    category: category,
                     priceRange: supplier.priceRange,
                     rating: supplier.rating,
                     tags: supplier.tags,
-                    icon: supplier.icon,
-                    compatibility: compatibility
+                    availability: supplier.availability,
+                    compatibility: compatibility,
+                    icon: icon,
+                    themeProfile: priceProfile.nivel,
+                    themeDescription: priceProfile.descricao
                 });
-            }
-            categorySuggestions.sort(function(a, b) {
-                return b.compatibility - a.compatibility;
-            });
-            for (var s = 0; s < Math.min(3, categorySuggestions.length); s++) {
-                suggestions.push(categorySuggestions[s]);
             }
         }
     }
+    
+    // Ordenar por compatibilidade
+    suggestions.sort(function(a, b) {
+        return b.compatibility - a.compatibility;
+    });
     
     return suggestions;
 }
 
+// Função auxiliar para extrair números do preço
+function parsePriceRange(priceRange) {
+    if (!priceRange) return 5000;
+    var numbers = priceRange.match(/\d+/g);
+    if (!numbers || numbers.length === 0) return 5000;
+    var sum = 0;
+    for (var i = 0; i < numbers.length; i++) {
+        sum = sum + parseInt(numbers[i], 10);
+    }
+    return sum / numbers.length;
+}
 // ============================================
 // SALVAR FORNECEDORES SUGERIDOS
+// ============================================
+// ============================================
+// SALVAR FORNECEDORES SUGERIDOS - CORRIGIDO
 // ============================================
 
 export async function saveSuggestedSupplier(userId, eventId, supplierData) {
     try {
-        var q = query(
+        // Garantir que userId está correto
+        if (!userId || !eventId) {
+            console.error("userId ou eventId faltando:", { userId, eventId });
+            return { success: false, error: "Dados incompletos" };
+        }
+        
+        // Verificar se já existe
+        const q = query(
             collection(db, "saved_suppliers"), 
             where("event_id", "==", eventId),
             where("supplier_id", "==", supplierData.id)
         );
-        var existing = await getDocs(q);
+        const querySnapshot = await getDocs(q);
         
-        if (!existing.empty) {
-            return { success: false, error: "Fornecedor ja salvo nesta lista" };
+        if (!querySnapshot.empty) {
+            return { success: false, error: "Fornecedor já salvo nesta lista" };
         }
         
-        var docRef = await addDoc(collection(db, "saved_suppliers"), {
+        // Criar o documento com todos os campos necessários
+        const newSupplier = {
             user_id: userId,
             event_id: eventId,
             supplier_id: supplierData.id,
-            name: supplierData.name,
-            category: supplierData.category,
-            price_range: supplierData.priceRange,
-            rating: supplierData.rating,
-            compatibility: supplierData.compatibility,
+            name: supplierData.name || "",
+            category: supplierData.category || "",
+            price_range: supplierData.priceRange || "",
+            rating: Number(supplierData.rating) || 0,
+            compatibility: Number(supplierData.compatibility) || 0,
             saved_at: new Date().toISOString()
-        });
+        };
+        
+        console.log("Salvando fornecedor:", newSupplier);
+        
+        const docRef = await addDoc(collection(db, "saved_suppliers"), newSupplier);
+        
+        console.log("Fornecedor salvo com ID:", docRef.id);
         return { success: true, id: docRef.id };
     } catch (error) {
-        console.error("Erro ao salvar fornecedor:", error);
-        return { success: false, error: error.message };
-    }
-}
-
-export async function getSavedSuppliers(eventId) {
-    try {
-        var q = query(collection(db, "saved_suppliers"), where("event_id", "==", eventId));
-        var querySnapshot = await getDocs(q);
-        var suppliers = [];
-        querySnapshot.forEach(function(doc) {
-            suppliers.push({ id: doc.id, ...doc.data() });
-        });
-        return suppliers;
-    } catch (error) {
-        return [];
-    }
-}
-
-export async function deleteSavedSupplier(supplierId) {
-    try {
-        await deleteDoc(doc(db, "saved_suppliers", supplierId));
-        return { success: true };
-    } catch (error) {
+        console.error("Erro detalhado ao salvar fornecedor:", error);
         return { success: false, error: error.message };
     }
 }
@@ -701,5 +842,38 @@ export async function getUserProfile(userId) {
         return null;
     } catch (error) {
         return null;
+    }
+}
+// ============================================
+// FORNECEDORES SALVOS - GET E DELETE
+// ============================================
+
+export async function getSavedSuppliers(eventId) {
+    try {
+        if (!eventId) {
+            console.error("eventId não fornecido");
+            return [];
+        }
+        
+        const q = query(collection(db, "saved_suppliers"), where("event_id", "==", eventId));
+        const querySnapshot = await getDocs(q);
+        const suppliers = [];
+        querySnapshot.forEach((doc) => {
+            suppliers.push({ id: doc.id, ...doc.data() });
+        });
+        return suppliers;
+    } catch (error) {
+        console.error("Erro ao buscar fornecedores salvos:", error);
+        return [];
+    }
+}
+
+export async function deleteSavedSupplier(supplierId) {
+    try {
+        await deleteDoc(doc(db, "saved_suppliers", supplierId));
+        return { success: true };
+    } catch (error) {
+        console.error("Erro ao deletar fornecedor salvo:", error);
+        return { success: false, error: error.message };
     }
 }

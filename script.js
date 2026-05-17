@@ -37,7 +37,9 @@ let state = {
     taskFilter: 'all',
     calendarYear: new Date().getFullYear(),
     calendarMonth: new Date().getMonth(),
-    charts: {}
+    charts: {},
+    searchTerm: '',
+    filterStatus: 'todos'
 };
 
 function escapeHtml(text) {
@@ -85,10 +87,6 @@ async function ensureEventHasTasks(eventId) {
     return false;
 }
 
-// ============================================
-// CALCULAR VALOR DO FORNECEDOR
-// ============================================
-
 function calculateSupplierValue(priceRange, guestCount, category) {
     if (!priceRange) return 0;
     const numbers = priceRange.match(/\d+/g);
@@ -120,10 +118,6 @@ function getEstimatedCostDescription(priceRange, guestCount, category) {
     }
     return '';
 }
-
-// ============================================
-// ENVIAR CONVITE POR WHATSAPP
-// ============================================
 
 window.sendWhatsAppInvite = async function(guestId, guestName, guestPhone) {
     if (!state.selectedEvent) {
@@ -179,10 +173,6 @@ window.sendMassWhatsAppInvite = async function() {
     showNotification(`Enviando convites para ${pendingGuests.length} convidados pendentes...`, 'success');
 };
 
-// ============================================
-// EXPORTACAO DE CONVIDADOS
-// ============================================
-
 window.exportGuestsToExcel = function() {
     if (!state.selectedEvent) {
         alert('Selecione um evento primeiro!');
@@ -232,10 +222,6 @@ window.exportGuestsToExcel = function() {
     XLSX.writeFile(wb, `convidados_${eventName.replace(/[^a-z0-9]/gi, '_')}_${dataAtual}.xlsx`);
     showNotification(`${state.guests.length} convidados exportados!`, 'success');
 };
-
-// ============================================
-// EXPORTACAO DE FORNECEDORES
-// ============================================
 
 window.exportSuppliersToExcel = function() {
     if (!state.selectedEvent) {
@@ -292,10 +278,6 @@ window.exportSuppliersToExcel = function() {
     showNotification(`${state.suppliers.length} fornecedores exportados!`, 'success');
 };
 
-// ============================================
-// IMPORTACAO DE CONVIDADOS
-// ============================================
-
 window.importGuestsFile = function() {
     if (!state.selectedEvent) {
         alert('Selecione um evento primeiro!');
@@ -331,7 +313,7 @@ async function processGuestFile(file) {
         if (result.imported.length > 0) {
             alert(`Importacao concluida!\n\n${result.imported.length} convidados importados.\n${result.errors.length} erros.`);
             state.guests = await getEventGuests(state.selectedEvent);
-            renderDashboard();
+            renderGuestListWithSearch();
         } else {
             alert(`Nenhum convidado importado.\n\nErros:\n${result.errors.slice(0, 5).join('\n')}`);
         }
@@ -457,10 +439,6 @@ window.downloadGuestTemplate = function() {
     showNotification('Modelo baixado!', 'success');
 };
 
-// ============================================
-// FUNCOES DE SUPORTE PARA FORNECEDORES
-// ============================================
-
 function getCategoryIconSimple(category) {
     const icons = { buffet: '🍽️', fotografia: '📷', decoracao: '🎨', musica: '🎵', espaco: '🏠' };
     return icons[category] || '📦';
@@ -486,10 +464,6 @@ function getCompatibilityColor(compatibility) {
     if (compatibility >= 60) return '#ffd700';
     return '#f59e0b';
 }
-
-// ============================================
-// BOTÃO DE TEMAS FLUTUANTE COM ARRASTE
-// ============================================
 
 function loadThemeButtonPosition() {
     const savedPosition = localStorage.getItem('themeButtonPosition');
@@ -557,10 +531,6 @@ function makeThemeButtonDraggable() {
         }
     });
 }
-
-// ============================================
-// SUGESTAO DE FORNECEDORES COM IA
-// ============================================
 
 window.showSupplierSuggestions = async function() {
     if (!state.selectedEvent) {
@@ -642,21 +612,26 @@ window.closeSuggestionsModal = function() {
 
 window.saveSuggestedSupplier = async function(supplierId, name, category, priceRange, rating, compatibility) {
     try {
+        if (!state.user || !state.user.id) {
+            showNotification('Usuário não identificado. Faça login novamente.', 'error');
+            return;
+        }
+        
+        if (!state.selectedEvent) {
+            showNotification('Selecione um evento primeiro!', 'error');
+            return;
+        }
+        
         const decodedName = name.replace(/\\'/g, "'");
         const decodedPriceRange = priceRange.replace(/\\'/g, "'");
+        
         const result = await saveSuggestedSupplier(state.user.id, state.selectedEvent, {
             id: supplierId, name: decodedName, category: category, priceRange: decodedPriceRange, rating: rating, compatibility: compatibility
         });
+        
         if (result.success) {
-            const guestCount = state.guests.length;
-            const estimatedValue = calculateSupplierValue(decodedPriceRange, guestCount, category);
-            const costDescription = getEstimatedCostDescription(decodedPriceRange, guestCount, category);
-            let message = `Fornecedor "${decodedName}" salvo na sua lista!`;
-            if (guestCount > 0 && estimatedValue > 0) {
-                message += `\n\nValor estimado para ${guestCount} convidados: ${formatCurrency(estimatedValue)}${costDescription}`;
-            }
-            showNotification(message, 'success');
             await loadSavedSuppliersList();
+            showNotification(`Fornecedor "${decodedName}" salvo na sua lista!`, 'success');
             closeSuggestionsModal();
             renderDashboard();
         } else {
@@ -667,10 +642,6 @@ window.saveSuggestedSupplier = async function(supplierId, name, category, priceR
         showNotification('Erro ao salvar fornecedor. Tente novamente.', 'error');
     }
 };
-
-// ============================================
-// DETALHES DO FORNECEDOR
-// ============================================
 
 window.showSupplierDetails = function(supplierId, name, category, priceRange, rating, tags, compatibility, icon) {
     let tagsArray = tags;
@@ -720,10 +691,6 @@ window.closeSupplierDetailsModal = function() {
     const modal = document.getElementById('supplierDetailsModal');
     if (modal) modal.remove();
 };
-
-// ============================================
-// FORNECEDORES SALVOS
-// ============================================
 
 window.showSavedSupplierDetails = function(savedId, name, category, priceRange, rating, compatibility) {
     const guestCount = state.guests.length;
@@ -800,32 +767,42 @@ window.addSavedSupplierToEvent = async function(savedId, name, category, priceRa
 
 async function loadSavedSuppliersList() {
     if (!state.selectedEvent) return;
-    const savedSuppliers = await getSavedSuppliers(state.selectedEvent);
-    const container = document.getElementById('savedSuppliersContainer');
-    if (container) {
-        if (savedSuppliers.length === 0) {
-            container.innerHTML = '<div class="empty-state">Nenhum fornecedor salvo. Use o botao "Sugerir Fornecedores" para recomendacoes personalizadas!</div>';
-        } else {
-            container.innerHTML = `
-                <div class="saved-suppliers-section">
-                    <h3><i class="fas fa-bookmark"></i> Meus Fornecedores Salvos</h3>
-                    <div class="saved-suppliers-list">
-                        ${savedSuppliers.map(s => `
-                            <div class="saved-supplier-card" style="cursor: pointer;" onclick="showSavedSupplierDetails('${s.id}', '${s.name.replace(/'/g, "\\'")}', '${s.category}', '${s.price_range.replace(/'/g, "\\'")}', ${s.rating}, ${s.compatibility})">
-                                <div>
-                                    <strong style="color: #ffd700;">${s.name}</strong>
-                                    <div style="font-size: 0.8rem; color: #888;">${getCategoryNameFull(s.category)} • ${s.price_range}</div>
-                                    <div style="font-size: 0.8rem; color: #888;">Estrelas ${s.rating}/5 • ${s.compatibility}% compativel</div>
+    
+    try {
+        const savedSuppliers = await getSavedSuppliers(state.selectedEvent);
+        const container = document.getElementById('savedSuppliersContainer');
+        
+        if (container) {
+            if (!savedSuppliers || savedSuppliers.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhum fornecedor salvo. Use o botão "Sugerir Fornecedores" para recomendações personalizadas!</div>';
+            } else {
+                container.innerHTML = `
+                    <div class="saved-suppliers-section">
+                        <h3><i class="fas fa-bookmark"></i> Meus Fornecedores Salvos (${savedSuppliers.length})</h3>
+                        <div class="saved-suppliers-list">
+                            ${savedSuppliers.map(s => `
+                                <div class="saved-supplier-card" style="cursor: pointer;" onclick="showSavedSupplierDetails('${s.id}', '${(s.name || '').replace(/'/g, "\\'")}', '${s.category || ""}', '${(s.price_range || "").replace(/'/g, "\\'")}', ${s.rating || 0}, ${s.compatibility || 0})">
+                                    <div>
+                                        <strong style="color: #ffd700;">${s.name || 'Sem nome'}</strong>
+                                        <div style="font-size: 0.8rem; color: #888;">${getCategoryNameFull(s.category || 'outros')} • ${s.price_range || 'Preço sob consulta'}</div>
+                                        <div style="font-size: 0.8rem; color: #888;">⭐ ${s.rating || 0}/5 • ${s.compatibility || 0}% compatível</div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button class="btn-small" onclick="event.stopPropagation(); addSavedSupplierToEvent('${s.id}', '${(s.name || "").replace(/'/g, "\\'")}', '${s.category || ""}', '${(s.price_range || "").replace(/'/g, "\\'")}')" style="background: #10b981; color: white;">Adicionar</button>
+                                        <button class="btn-small" onclick="event.stopPropagation(); removeSavedSupplier('${s.id}')" style="background: #e11d48; color: white;">Remover</button>
+                                    </div>
                                 </div>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <button class="btn-small" onclick="event.stopPropagation(); addSavedSupplierToEvent('${s.id}', '${s.name.replace(/'/g, "\\'")}', '${s.category}', '${s.price_range.replace(/'/g, "\\'")}')" style="background: #10b981; color: white;">Adicionar</button>
-                                    <button class="btn-small" onclick="event.stopPropagation(); removeSavedSupplier('${s.id}')" style="background: #e11d48; color: white;">Remover</button>
-                                </div>
-                            </div>
-                        `).join('')}
+                            `).join('')}
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
+        }
+    } catch (error) {
+        console.error("Erro ao carregar fornecedores salvos:", error);
+        const container = document.getElementById('savedSuppliersContainer');
+        if (container) {
+            container.innerHTML = '<div class="empty-state">Erro ao carregar fornecedores salvos. Tente novamente.</div>';
         }
     }
 }
@@ -837,10 +814,6 @@ window.removeSavedSupplier = async function(savedId) {
         showNotification('Fornecedor removido!', 'success');
     }
 };
-
-// ============================================
-// FUNCOES AUXILIARES
-// ============================================
 
 function formatCurrency(v) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -903,10 +876,6 @@ async function loadEventData(id) {
     await loadSavedSuppliersList();
 }
 
-// ============================================
-// GRAFICOS
-// ============================================
-
 function criarGraficos() {
     if (!state.selectedEvent) return;
     const ctxPie1 = document.getElementById('graficoPizzaCategorias')?.getContext('2d');
@@ -931,10 +900,6 @@ function criarGraficos() {
         });
     }
 }
-
-// ============================================
-// RENDERIZACAO DO PERFIL
-// ============================================
 
 function renderPerfil() {
     const profile = state.user?.profile || {};
@@ -972,10 +937,6 @@ function renderPerfil() {
         </div>
     `;
 }
-
-// ============================================
-// RENDERIZACAO DO CHECKLIST
-// ============================================
 
 function renderChecklist() {
     let filteredTasks = state.tasks;
@@ -1029,10 +990,6 @@ function renderChecklist() {
     `;
 }
 
-// ============================================
-// RENDERIZACAO DO CALENDARIO
-// ============================================
-
 function renderCalendario() {
     const primeiraSemana = new Date(state.calendarYear, state.calendarMonth, 1);
     const ultimoDia = new Date(state.calendarYear, state.calendarMonth + 1, 0);
@@ -1082,16 +1039,12 @@ window.selecionarDataCalendario = async (dataISO) => {
     }
 };
 
-// ============================================
-// RENDERIZACAO SOBRE NOS
-// ============================================
-
 function renderAbout() {
     return `
         <div class="about-section">
             <div class="about-header-horizontal">
                 <div class="about-logo-horizontal">
-                    <img src="assets/LOGO3.png" class="about-logo-img-horizontal" onerror="this.src='https://placehold.co/200x200?text=LA+VIE'">
+                    <img src="assets/logo3.png" class="about-logo-img-horizontal" onerror="this.style.display='none'">
                 </div>
                 <div class="about-text-horizontal">
                     <h1 class="about-logo-title">LA VIE</h1>
@@ -1099,28 +1052,24 @@ function renderAbout() {
                     <p class="about-tagline">Realizando sonhos com tecnologia e inovação</p>
                 </div>
             </div>
-                <div class="about-card">
-                    <h2><i class="fas fa-bullseye"></i> Missão</h2>
-                    <p>Oferecer uma plataforma completa e intuitiva que permita aos casais planejarem seu casamento com tranquilidade, economia e organização, conectando tecnologia e emoção em cada detalhe.</p>
-                </div>
-
-                <div class="about-card">
-                    <h2><i class="fas fa-eye"></i> Visão</h2>
-                    <p>Ser referência acadêmica e profissional em plataformas de planejamento de casamentos, reconhecida pela inovação tecnológica, confiabilidade e por transformar sonhos em realidade.</p>
-                </div>
-
-                <div class="about-card">
-                    <h2><i class="fas fa-gem"></i> Valores</h2>
-                    <ul class="about-values">
-                        <li>Inovação tecnológica</li>
-                        <li>Compromisso com a excelência</li>
-                        <li>Transparência e confiança</li>
-                        <li>Empatia com os sonhos dos casais</li>
-                        <li>Aprendizado contínuo</li>
-                    </ul>
-                </div>
+            <div class="about-card">
+                <h2><i class="fas fa-bullseye"></i> Missão</h2>
+                <p>Oferecer uma plataforma completa e intuitiva que permita aos casais planejarem seu casamento com tranquilidade, economia e organização, conectando tecnologia e emoção em cada detalhe.</p>
             </div>
-
+            <div class="about-card">
+                <h2><i class="fas fa-eye"></i> Visão</h2>
+                <p>Ser referência acadêmica e profissional em plataformas de planejamento de casamentos, reconhecida pela inovação tecnológica, confiabilidade e por transformar sonhos em realidade.</p>
+            </div>
+            <div class="about-card">
+                <h2><i class="fas fa-gem"></i> Valores</h2>
+                <ul class="about-values">
+                    <li>Inovação tecnológica</li>
+                    <li>Compromisso com a excelência</li>
+                    <li>Transparência e confiança</li>
+                    <li>Empatia com os sonhos dos casais</li>
+                    <li>Aprendizado contínuo</li>
+                </ul>
+            </div>
             <div class="about-footer">
                 <p>&copy; 2026 La Vie Casamentos - Trabalho Acadêmico</p>
                 <p>Desenvolvido por estudantes de Análise e Desenvolvimento de Sistemas</p>
@@ -1131,26 +1080,118 @@ function renderAbout() {
 }
 
 // ============================================
-// FUNCOES DE TEMAS
-// ============================================
-// ============================================
-// FUNCOES DE TEMAS - VERSÃO CORRIGIDA
+// BUSCA DE CONVIDADOS
 // ============================================
 
-// Criar o botão e o menu de temas
+function filterGuests() {
+    let filtered = [...state.guests];
+    
+    if (state.searchTerm) {
+        const term = state.searchTerm.toLowerCase();
+        filtered = filtered.filter(g => 
+            g.name?.toLowerCase().includes(term) || 
+            g.group_name?.toLowerCase().includes(term)
+        );
+    }
+    
+    if (state.filterStatus !== 'todos') {
+        filtered = filtered.filter(g => g.status === state.filterStatus);
+    }
+    
+    return filtered;
+}
+
+function renderGuestListWithSearch() {
+    const container = document.getElementById('guestListContainer');
+    if (!container) return;
+    
+    const filteredGuests = filterGuests();
+    const confirmados = filteredGuests.filter(g => g.status === 'confirmado').length;
+    const pendentes = filteredGuests.filter(g => g.status === 'pendente').length;
+    const recusados = filteredGuests.filter(g => g.status === 'recusado').length;
+    
+    container.innerHTML = `
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchGuestInput" placeholder="Buscar por nome ou grupo..." value="${escapeHtml(state.searchTerm)}">
+                <i class="fas fa-times" id="clearSearch" style="cursor: pointer; display: ${state.searchTerm ? 'block' : 'none'};"></i>
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-badge ${state.filterStatus === 'todos' ? 'active' : ''}" data-status="todos">Todos (${filteredGuests.length})</button>
+                <button class="filter-badge ${state.filterStatus === 'pendente' ? 'active' : ''}" data-status="pendente">Pendentes (${pendentes})</button>
+                <button class="filter-badge ${state.filterStatus === 'confirmado' ? 'active' : ''}" data-status="confirmado">Confirmados (${confirmados})</button>
+                <button class="filter-badge ${state.filterStatus === 'recusado' ? 'active' : ''}" data-status="recusado">Recusados (${recusados})</button>
+            </div>
+            <div class="search-stats">
+                Mostrando ${filteredGuests.length} de ${state.guests.length} convidados
+            </div>
+        </div>
+        
+        ${filteredGuests.length === 0 ? `
+            <div class="empty-state">
+                <i class="fas fa-user-slash"></i>
+                <p>Nenhum convidado encontrado</p>
+                <small>Tente outro termo de busca</small>
+            </div>
+        ` : `
+            <div class="guest-list">
+                ${filteredGuests.map(g => `
+                    <div class="guest-card">
+                        <div>
+                            <strong>${escapeHtml(g.name)}</strong>
+                            <div style="font-size: 0.7rem; color: #888;">
+                                ${g.status === 'confirmado' ? '✅ Confirmado' : g.status === 'recusado' ? '❌ Recusado' : '⏳ Pendente'}
+                                ${g.table_name ? ` • Mesa ${escapeHtml(g.table_name)}` : ''}
+                                ${g.group_name ? ` • ${escapeHtml(g.group_name)}` : ''}
+                            </div>
+                            ${g.phone ? `<div style="font-size: 0.7rem; color: #888;">📱 ${g.phone}</div>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            ${g.phone && g.status === 'pendente' ? `<button class="btn-small" onclick="sendWhatsAppInvite('${g.id}', '${escapeHtml(g.name).replace(/'/g, "\\'")}', '${g.phone}')" style="background: #25D366; color: white;">WhatsApp</button>` : ''}
+                            <button class="btn-small" onclick="editGuest('${g.id}')">Editar</button>
+                            <button class="btn-small" onclick="deleteGuestConfirm('${g.id}')">Excluir</button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `}
+    `;
+    
+    const searchInput = document.getElementById('searchGuestInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            state.searchTerm = e.target.value;
+            renderGuestListWithSearch();
+        });
+    }
+    
+    const clearBtn = document.getElementById('clearSearch');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            state.searchTerm = '';
+            renderGuestListWithSearch();
+        });
+    }
+    
+    document.querySelectorAll('.filter-badge').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.filterStatus = btn.dataset.status;
+            renderGuestListWithSearch();
+        });
+    });
+}
+
 function createThemeUI() {
-    // Remover se já existir
     const existingBtn = document.querySelector('.theme-toggle-btn');
     if (existingBtn) existingBtn.remove();
     const existingMenu = document.getElementById('themeMenu');
     if (existingMenu) existingMenu.remove();
     
-    // Criar botão flutuante
     const themeBtn = document.createElement('div');
     themeBtn.className = 'theme-toggle-btn';
     themeBtn.innerHTML = '<span class="theme-icon">🎨</span>';
     
-    // Aplicar estilos diretamente para garantir
     themeBtn.style.position = 'fixed';
     themeBtn.style.bottom = '20px';
     themeBtn.style.left = '20px';
@@ -1166,7 +1207,6 @@ function createThemeUI() {
     themeBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
     themeBtn.style.transition = 'all 0.3s';
     
-    // Tooltip
     const tooltip = document.createElement('div');
     tooltip.className = 'theme-tooltip';
     tooltip.textContent = 'Temas';
@@ -1195,7 +1235,6 @@ function createThemeUI() {
         tooltip.style.visibility = 'hidden';
     });
     
-    // Criar o menu de temas
     const themeMenu = document.createElement('div');
     themeMenu.id = 'themeMenu';
     themeMenu.style.position = 'fixed';
@@ -1246,7 +1285,6 @@ function createThemeUI() {
     document.body.appendChild(themeBtn);
     document.body.appendChild(themeMenu);
     
-    // Hover effect no botão
     themeBtn.addEventListener('mouseenter', () => {
         themeBtn.style.transform = 'scale(1.1)';
         themeBtn.style.boxShadow = '0 6px 20px rgba(255, 215, 0, 0.4)';
@@ -1256,7 +1294,6 @@ function createThemeUI() {
         themeBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
     });
     
-    // Evento do botão para abrir/fechar menu
     themeBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         if (themeMenu.style.display === 'none' || themeMenu.style.display === '') {
@@ -1266,7 +1303,6 @@ function createThemeUI() {
         }
     });
     
-    // Fechar menu
     const closeBtn = document.getElementById('closeThemeMenu');
     if (closeBtn) {
         closeBtn.addEventListener('click', function(e) {
@@ -1275,7 +1311,6 @@ function createThemeUI() {
         });
     }
     
-    // Eventos das opções de tema
     document.querySelectorAll('.theme-option').forEach(option => {
         option.addEventListener('mouseenter', function() {
             this.style.background = 'rgba(255, 215, 0, 0.1)';
@@ -1291,7 +1326,6 @@ function createThemeUI() {
         });
     });
     
-    // Fechar ao clicar fora
     document.addEventListener('click', function(e) {
         if (!themeBtn.contains(e.target) && !themeMenu.contains(e.target)) {
             themeMenu.style.display = 'none';
@@ -1323,10 +1357,6 @@ function loadSavedTheme() {
 
 window.toggleThemeMenu = toggleThemeMenu;
 window.applyTheme = applyTheme;
-
-// ============================================
-// RENDERIZACAO DO DASHBOARD
-// ============================================
 
 async function renderDashboard() {
     const app = document.getElementById('app');
@@ -1413,20 +1443,7 @@ async function renderDashboard() {
                             <button class="btn-secondary" onclick="exportGuestsToExcel()">Exportar Excel</button>
                             <button class="btn-secondary" onclick="sendMassWhatsAppInvite()" style="background: #25D366; color: white; border-color: #25D366;">Enviar Convites</button>
                         </div></div>
-                        <div class="guest-list">${state.guests.map(g => `
-                            <div class="guest-card">
-                                <div>
-                                    <strong>${g.name}</strong>
-                                    <div style="font-size: 0.7rem; color: #888;">${g.status === 'confirmado' ? 'Confirmado' : g.status === 'recusado' ? 'Recusado' : 'Pendente'}${g.table_name ? ` • Mesa ${g.table_name}` : ''}</div>
-                                    ${g.phone ? `<div style="font-size: 0.7rem; color: #888;">📱 ${g.phone}</div>` : ''}
-                                </div>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    ${g.phone && g.status === 'pendente' ? `<button class="btn-small" onclick="sendWhatsAppInvite('${g.id}', '${g.name.replace(/'/g, "\\'")}', '${g.phone}')" style="background: #25D366; color: white;">WhatsApp</button>` : ''}
-                                    <button class="btn-small" onclick="editGuest('${g.id}')">Editar</button>
-                                    <button class="btn-small" onclick="deleteGuestConfirm('${g.id}')">Excluir</button>
-                                </div>
-                            </div>
-                        `).join('')}${state.guests.length === 0 ? '<div class="empty-state">Nenhum convidado</div>' : ''}</div>
+                        <div id="guestListContainer"></div>
                         <div class="section-header"><h2>Fornecedores</h2><div><button class="btn" onclick="openSupplierModal()">Adicionar</button><button class="btn-secondary" onclick="showSupplierSuggestions()" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white;">Sugerir Fornecedores</button><button class="btn-secondary" onclick="exportSuppliersToExcel()">Exportar Excel</button></div></div>
                         <div class="supplier-list">${state.suppliers.map(s => `<div class="supplier-card"><div><strong>${s.name}</strong><div>${s.category} • ${formatCurrency(s.value)}<br>${s.status === 'contratado' ? 'Contratado' : s.status === 'negociacao' ? 'Negociacao' : 'Cotado'}</div></div><div><button class="btn-small" onclick="editSupplier('${s.id}')">Editar</button><button class="btn-small" onclick="deleteSupplierConfirm('${s.id}')">Excluir</button></div></div>`).join('')}${state.suppliers.length === 0 ? '<div class="empty-state">Nenhum fornecedor</div>' : ''}</div>
                         <div id="savedSuppliersContainer"></div>
@@ -1441,12 +1458,11 @@ async function renderDashboard() {
     `;
     criarGraficos();
     attachFormEvents();
-    if (state.selectedEvent) await loadSavedSuppliersList();
+    if (state.selectedEvent) {
+        await loadSavedSuppliersList();
+        renderGuestListWithSearch();
+    }
 }
-
-// ============================================
-// FORMULARIOS E HANDLERS
-// ============================================
 
 function renderEventForm() {
     const event = state.editingEvent;
@@ -1525,7 +1541,7 @@ async function handleGuestSubmit(e) {
         state.guests = await getEventGuests(state.selectedEvent);
         closeGuestModal();
         showNotification('Convidado salvo!', 'success');
-        renderDashboard();
+        renderGuestListWithSearch();
     } else showNotification('Erro ao salvar convidado', 'error');
 }
 
@@ -1585,10 +1601,6 @@ async function handlePhotoUpload(e) {
         reader.readAsDataURL(file);
     }
 }
-
-// ============================================
-// FUNCOES DE AUTENTICACAO
-// ============================================
 
 function renderAuth() {
     const isLogin = state.authMode === 'login';
@@ -1680,7 +1692,16 @@ async function logout() {
 window.setAuthMode = (m) => { state.authMode = m; renderAuth(); };
 window.setActiveTab = (tab) => { state.activeTab = tab; renderDashboard(); };
 window.setTaskFilter = (filter) => { state.taskFilter = filter; renderDashboard(); };
-window.selectEvent = async (id) => { state.selectedEvent = id; if (id) await loadEventData(id); await loadSavedSuppliersList(); renderDashboard(); };
+window.selectEvent = async (id) => { 
+    state.selectedEvent = id; 
+    if (id) {
+        await loadEventData(id);
+        state.searchTerm = '';
+        state.filterStatus = 'todos';
+        renderGuestListWithSearch();
+    }
+    renderDashboard(); 
+};
 window.mudarMes = (d) => { const nd = new Date(state.calendarYear, state.calendarMonth + d, 1); state.calendarYear = nd.getFullYear(); state.calendarMonth = nd.getMonth(); renderDashboard(); };
 window.toggleTaskComplete = async (id) => { await toggleTaskComplete(id); state.tasks = state.selectedEvent ? await getUserTasks(state.user.id, state.selectedEvent) : await getUserTasks(state.user.id); renderDashboard(); };
 window.openEventModal = () => { state.editingEvent = null; state.showEventForm = true; renderDashboard(); };
@@ -1690,7 +1711,7 @@ window.deleteEventConfirm = async (id) => { if (confirm('Excluir evento?')) { aw
 window.openGuestModal = () => { if (!state.selectedEvent) return alert('Selecione um evento primeiro!'); state.editingGuest = null; state.showGuestForm = true; renderDashboard(); };
 window.editGuest = (id) => { state.editingGuest = state.guests.find(g => g.id === id); state.showGuestForm = true; renderDashboard(); };
 window.closeGuestModal = () => { state.showGuestForm = false; state.editingGuest = null; renderDashboard(); };
-window.deleteGuestConfirm = async (id) => { if (confirm('Excluir convidado?')) { await deleteGuest(id); state.guests = await getEventGuests(state.selectedEvent); renderDashboard(); } };
+window.deleteGuestConfirm = async (id) => { if (confirm('Excluir convidado?')) { await deleteGuest(id); state.guests = await getEventGuests(state.selectedEvent); renderGuestListWithSearch(); } };
 window.openSupplierModal = () => { if (!state.selectedEvent) return alert('Selecione um evento primeiro!'); state.editingSupplier = null; state.showSupplierForm = true; renderDashboard(); };
 window.editSupplier = (id) => { state.editingSupplier = state.suppliers.find(s => s.id === id); state.showSupplierForm = true; renderDashboard(); };
 window.closeSupplierModal = () => { state.showSupplierForm = false; state.editingSupplier = null; renderDashboard(); };
@@ -1700,7 +1721,6 @@ window.editTask = (id) => { state.editingTask = state.tasks.find(t => t.id === i
 window.closeTaskModal = () => { state.showTaskForm = false; state.editingTask = null; renderDashboard(); };
 window.deleteTaskConfirm = async (id) => { if (confirm('Excluir tarefa?')) { await deleteTask(id); state.tasks = state.selectedEvent ? await getUserTasks(state.user.id, state.selectedEvent) : await getUserTasks(state.user.id); renderDashboard(); } };
 window.logout = logout;
-
 
 loadSavedTheme();
 createThemeUI();

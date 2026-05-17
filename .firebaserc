@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "la-vie-casamentos"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }
