@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gerador de Ícones PWA - La Vie</title>
+    <style>
+        body { font-family: Arial; text-align: center; padding: 2rem; background: #1a1a2e; color: white; }
+        button { background: #ffd700; border: none; padding: 1rem 2rem; border-radius: 50px; cursor: pointer; margin: 1rem; font-size: 1.2rem; }
+        .icon-preview { display: inline-block; margin: 1rem; text-align: center; }
+        canvas { margin: 0.5rem; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+    <h1>🎨 Gerador de Ícones PWA - La Vie Casamentos</h1>
+    <p>Clique no botão abaixo para gerar e baixar todos os ícones</p>
+    <button onclick="generateAllIcons()">📥 Gerar e Baixar Todos os Ícones</button>
+    <div id="preview"></div>
+
+    <script>
+        function createIcon(size, bgColor, iconChar) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Fundo gradiente dourado
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#ffd700');
+            gradient.addColorStop(1, '#ffb347');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Borda branca arredondada
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = size * 0.04;
+            ctx.strokeRect(size * 0.1, size * 0.1, size * 0.8, size * 0.8);
+            
+            // Cantos arredondados
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillRect(size * 0.08, size * 0.08, size * 0.84, size * 0.84);
+            
+            // Texto/Ícone
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size * 0.45}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(iconChar, size / 2, size / 2);
+            
+            // Detalhe pequeno
+            ctx.font = `${size * 0.08}px Arial`;
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fillText('❤️', size * 0.85, size * 0.9);
+            
+            return canvas;
+        }
+        
+        async function downloadIcon(canvas, filename) {
+            return new Promise((resolve) => {
+                const link = document.createElement('a');
+                link.download = filename;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                setTimeout(resolve, 300);
+            });
+        }
+        
+        function previewIcon(canvas, size) {
+            const container = document.getElementById('preview');
+            const div = document.createElement('div');
+            div.className = 'icon-preview';
+            div.innerHTML = `<strong>${size}x${size}</strong><br>`;
+            div.appendChild(canvas);
+            container.appendChild(div);
+        }
+        
+        async function generateAllIcons() {
+            const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+            const iconChar = '💛'; // Coração amarelo - ou use '💍', '🤵', '👰', '🎊'
+            
+            document.getElementById('preview').innerHTML = '<h2>📦 Gerando ícones...</h2>';
+            
+            for (const size of sizes) {
+                const canvas = createIcon(size, '#ffd700', iconChar);
+                previewIcon(canvas, size);
+                await downloadIcon(canvas, `icon-${size}.png`);
+            }
+            
+            document.getElementById('preview').innerHTML += '<h2>✅ Todos os ícones foram baixados!</h2><p>Coloque os arquivos na pasta <strong>assets/</strong> do seu projeto.</p>';
+        }
+    </script>
+</body>
+</html>

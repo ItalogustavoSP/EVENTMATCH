@@ -1,4 +1,3 @@
-// firebase-config.js
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { 
     getAuth, 
@@ -16,7 +15,9 @@ import {
 import { 
     getFirestore, 
     collection, doc, setDoc, getDoc, getDocs, 
-    query, where, updateDoc, deleteDoc, addDoc 
+    query, where, updateDoc, deleteDoc, addDoc,
+    enableIndexedDbPersistence,
+    CACHE_SIZE_UNLIMITED
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -33,12 +34,27 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Ativar persistência offline
+enableIndexedDbPersistence(db, { cacheSizeBytes: CACHE_SIZE_UNLIMITED })
+    .then(() => console.log("🔥 Persistência offline ativada"))
+    .catch((err) => {
+        if (err.code === 'failed-precondition') {
+            console.log("⚠️ Múltiplas abas abertas, cache limitado");
+        } else if (err.code === 'unimplemented') {
+            console.log("⚠️ Navegador não suporta persistência offline");
+        }
+    });
+
 setPersistence(auth, browserLocalPersistence)
-    .then(() => console.log("Persistencia ativada"))
+    .then(() => console.log("🔐 Persistência de autenticação ativada"))
     .catch((error) => console.error("Erro ao ativar persistencia:", error));
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
+
+// ============================================
+// FUNÇÕES DE AUTENTICAÇÃO
+// ============================================
 
 export async function loginWithGoogle() {
     try {
@@ -81,6 +97,7 @@ export async function loginWithGoogle() {
             }
         };
     } catch (error) {
+        console.error("Erro login Google:", error);
         return { success: false, error: error.message };
     }
 }
@@ -112,8 +129,9 @@ export async function loginWithEmail(email, password) {
         };
     } catch (error) {
         let errorMessage = "Erro no login";
-        if (error.code === "auth/user-not-found") errorMessage = "Usuario nao encontrado";
+        if (error.code === "auth/user-not-found") errorMessage = "Usuário não encontrado";
         if (error.code === "auth/wrong-password") errorMessage = "Senha incorreta";
+        if (error.code === "auth/too-many-requests") errorMessage = "Muitas tentativas. Tente mais tarde";
         return { success: false, error: errorMessage };
     }
 }
@@ -132,12 +150,23 @@ export async function registerWithEmail(email, password, username) {
             profile: { fullName: "", cpf: "", birthDate: "", address: "", phone: "", photo: null }
         });
         await signOut(auth);
-        return { success: true, message: "Email de verificacao enviado!" };
+        return { success: true, message: "Email de verificação enviado!" };
     } catch (error) {
         let errorMessage = "Erro no cadastro";
-        if (error.code === "auth/email-already-in-use") errorMessage = "Email ja cadastrado";
-        if (error.code === "auth/weak-password") errorMessage = "Senha muito fraca";
+        if (error.code === "auth/email-already-in-use") errorMessage = "Email já cadastrado";
+        if (error.code === "auth/weak-password") errorMessage = "Senha muito fraca (mínimo 6 caracteres)";
         return { success: false, error: errorMessage };
+    }
+}
+
+export async function logoutUser() {
+    try {
+        await signOut(auth);
+        console.log("✅ Logout realizado com sucesso");
+        return { success: true };
+    } catch (error) {
+        console.error("Erro no logout:", error);
+        return { success: false, error: error.message };
     }
 }
 
@@ -163,39 +192,33 @@ export async function sendVerificationEmail() {
     }
 }
 
-export async function logoutUser() {
-    try {
-        await signOut(auth);
-        return { success: true };
-    } catch (error) {
-        return { success: false };
-    }
-}
-
 export function onAuthChange(callback) {
     return onAuthStateChanged(auth, async (user) => {
+        console.log("🟢 onAuthStateChanged disparado:", user ? "Usuário logado" : "Usuário deslogado");
+        
         if (user) {
-            const userDoc = await getDoc(doc(db, "users", user.uid));
-            const userData = userDoc.data();
-            callback({
-                id: user.uid,
-                username: userData?.username || user.displayName || user.email.split("@")[0],
-                email: user.email,
-                photoURL: user.photoURL,
-                emailVerified: user.emailVerified,
-                is_admin: userData?.is_admin || false,
-                createdAt: userData?.createdAt || new Date().toISOString(),
-                profile: userData?.profile || {}
-            });
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                const userData = userDoc.data();
+                callback({
+                    id: user.uid,
+                    username: userData?.username || user.displayName || user.email.split("@")[0],
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    emailVerified: user.emailVerified,
+                    is_admin: userData?.is_admin || false,
+                    createdAt: userData?.createdAt || new Date().toISOString(),
+                    profile: userData?.profile || {}
+                });
+            } catch (error) {
+                console.error("Erro ao carregar dados do usuário:", error);
+                callback(null);
+            }
         } else {
             callback(null);
         }
     });
 }
-
-// ============================================
-// REPOSITORIO DE FORNECEDORES (IA)
-// ============================================
 
 // ============================================
 // REPOSITORIO DE FORNECEDORES (IA)
@@ -240,7 +263,7 @@ export const SUPPLIERS_DB = {
 };
 
 // ============================================
-// TAREFAS PADRAO (CHECKLIST AUTOMATICO)
+// TAREFAS PADRAO
 // ============================================
 
 const DEFAULT_TASKS = [
@@ -309,179 +332,85 @@ export async function createDefaultTasksForEvent(userId, eventId) {
 // ============================================
 // IA DE SUGESTAO DE FORNECEDORES
 // ============================================
-// ============================================
-// IA DE SUGESTAO DE FORNECEDORES - CORRIGIDA
-// ============================================
 
-// ============================================
-// IA DE SUGESTAO DE FORNECEDORES - COM PERFIL DE PREÇO POR TEMA
-// ============================================
+function parsePriceRange(priceRange) {
+    if (!priceRange) return 5000;
+    var numbers = priceRange.match(/\d+/g);
+    if (!numbers || numbers.length === 0) return 5000;
+    var sum = 0;
+    for (var i = 0; i < numbers.length; i++) {
+        sum = sum + parseInt(numbers[i], 10);
+    }
+    return sum / numbers.length;
+}
 
 export function suggestSuppliersIA(eventTheme, budget) {
     var suggestions = [];
     
-    // Perfil de preço por tema
     var themePriceProfile = {
         "classico": { nivel: "medio", multiplicador: 0.8, descricao: "Tradicional e elegante" },
         "moderno": { nivel: "medio-alto", multiplicador: 1.0, descricao: "Contemporâneo e minimalista" },
         "rustico": { nivel: "baixo-medio", multiplicador: 0.6, descricao: "Campestre e aconchegante" },
-        "luxo": { nivel: "alto", multiplicador: 1.5, descricao: "Sofisticado e requintado" },
-        "romantico": { nivel: "medio", multiplicador: 0.85, descricao: "Delicado e emocional" },
-        "praia": { nivel: "medio", multiplicador: 0.9, descricao: "Descontraído e natural" },
-        "industrial": { nivel: "medio", multiplicador: 0.9, descricao: "Urbano e descolado" },
-        "vintage": { nivel: "medio", multiplicador: 0.85, descricao: "Retro e nostálgico" },
-        "boho": { nivel: "baixo-medio", multiplicador: 0.7, descricao: "Artístico e livre" },
-        "gotico": { nivel: "medio", multiplicador: 0.9, descricao: "Misterioso e elegante" }
+        "luxo": { nivel: "alto", multiplicador: 1.5, descricao: "Sofisticado e requintado" }
     };
     
-    // Fornecedores com faixas de preço por categoria e perfil
     const SUPPLIERS_BY_THEME = {
-        // Fornecedores para tema CLÁSSICO (preço médio)
         classico: {
-            buffet: [
-                { id: "buf1", name: "Buffet Tradição & Elegância", priceRange: "R$ 70-100 por pessoa", rating: 4.7, tags: ["classico", "tradicional", "elegante"], availability: 90 },
-                { id: "buf2", name: "Sabores da Vovó", priceRange: "R$ 50-80 por pessoa", rating: 4.5, tags: ["caseiro", "tradicional", "familiar"], availability: 95 },
-                { id: "buf3", name: "Buffet Nobreza", priceRange: "R$ 80-120 por pessoa", rating: 4.8, tags: ["classico", "requintado", "gourmet"], availability: 85 }
-            ],
-            fotografia: [
-                { id: "fot1", name: "Fotografia Classic Moments", priceRange: "R$ 2.500 - 4.000", rating: 4.7, tags: ["classico", "romantico", "posado"], availability: 88 },
-                { id: "fot2", name: "Estudio Luz & Sombra", priceRange: "R$ 2.000 - 3.500", rating: 4.5, tags: ["tradicional", "estudio", "elegante"], availability: 92 }
-            ],
-            decoracao: [
-                { id: "dec1", name: "Decorações Clássicas", priceRange: "R$ 4.000 - 7.000", rating: 4.6, tags: ["classico", "floral", "elegante"], availability: 85 },
-                { id: "dec2", name: "Arte & Flores", priceRange: "R$ 3.500 - 6.000", rating: 4.5, tags: ["romantico", "floral", "delicado"], availability: 90 }
-            ],
-            musica: [
-                { id: "mus1", name: "Orquestra de Câmara", priceRange: "R$ 3.000 - 5.000", rating: 4.8, tags: ["classico", "instrumental", "elegante"], availability: 75 },
-                { id: "mus2", name: "Banda Clássica", priceRange: "R$ 2.500 - 4.000", rating: 4.6, tags: ["classico", "ao vivo", "romantico"], availability: 80 }
-            ],
-            espaco: [
-                { id: "esp1", name: "Salão Nobre Classic", priceRange: "R$ 8.000 - 15.000", rating: 4.7, tags: ["classico", "elegante", "imponente"], availability: 82 },
-                { id: "esp2", name: "Espaço Villa Bella", priceRange: "R$ 7.000 - 12.000", rating: 4.5, tags: ["campestre", "classico", "acolhedor"], availability: 88 }
-            ]
+            buffet: [{ id: "buf1", name: "Buffet Tradição & Elegância", priceRange: "R$ 70-100 por pessoa", rating: 4.7, availability: 90 }],
+            fotografia: [{ id: "fot1", name: "Fotografia Classic Moments", priceRange: "R$ 2.500 - 4.000", rating: 4.7, availability: 88 }],
+            decoracao: [{ id: "dec1", name: "Decorações Clássicas", priceRange: "R$ 4.000 - 7.000", rating: 4.6, availability: 85 }],
+            musica: [{ id: "mus1", name: "Orquestra de Câmara", priceRange: "R$ 3.000 - 5.000", rating: 4.8, availability: 75 }],
+            espaco: [{ id: "esp1", name: "Salão Nobre Classic", priceRange: "R$ 8.000 - 15.000", rating: 4.7, availability: 82 }]
         },
-        
-        // Fornecedores para tema LUXO (preço alto)
         luxo: {
-            buffet: [
-                { id: "buf1", name: "Buffet Imperial", priceRange: "R$ 150-250 por pessoa", rating: 5.0, tags: ["luxo", "gourmet", "internacional"], availability: 60 },
-                { id: "buf2", name: "Chef Estrela Michelin", priceRange: "R$ 200-350 por pessoa", rating: 5.0, tags: ["luxo", "requintado", "exclusivo"], availability: 50 },
-                { id: "buf3", name: "Buffet Palace", priceRange: "R$ 120-200 por pessoa", rating: 4.9, tags: ["luxo", "elegante", "sofisticado"], availability: 70 }
-            ],
-            fotografia: [
-                { id: "fot1", name: "Vogue Photography", priceRange: "R$ 8.000 - 15.000", rating: 5.0, tags: ["luxo", "editorial", "exclusivo"], availability: 55 },
-                { id: "fot2", name: "Golden Lens Studio", priceRange: "R$ 6.000 - 12.000", rating: 4.9, tags: ["luxo", "requintado", "premium"], availability: 65 }
-            ],
-            decoracao: [
-                { id: "dec1", name: "Decorações Reais", priceRange: "R$ 15.000 - 30.000", rating: 5.0, tags: ["luxo", "chique", "exclusivo"], availability: 50 },
-                { id: "dec2", name: "Eventos Premium", priceRange: "R$ 12.000 - 25.000", rating: 4.9, tags: ["luxo", "requintado", "design"], availability: 60 }
-            ],
-            musica: [
-                { id: "mus1", name: "Orquestra Sinfônica", priceRange: "R$ 8.000 - 15.000", rating: 5.0, tags: ["luxo", "classica", "imponente"], availability: 55 },
-                { id: "mus2", name: "Artista Internacional", priceRange: "R$ 10.000 - 20.000", rating: 5.0, tags: ["luxo", "exclusivo", "famoso"], availability: 40 }
-            ],
-            espaco: [
-                { id: "esp1", name: "Palácio dos Eventos", priceRange: "R$ 25.000 - 50.000", rating: 5.0, tags: ["luxo", "imponente", "exclusivo"], availability: 45 },
-                { id: "esp2", name: "Hotel 5 Estrelas", priceRange: "R$ 20.000 - 40.000", rating: 4.9, tags: ["luxo", "requintado", "vista"], availability: 55 }
-            ]
+            buffet: [{ id: "buf1", name: "Buffet Imperial", priceRange: "R$ 150-250 por pessoa", rating: 5.0, availability: 60 }],
+            fotografia: [{ id: "fot1", name: "Vogue Photography", priceRange: "R$ 8.000 - 15.000", rating: 5.0, availability: 55 }],
+            decoracao: [{ id: "dec1", name: "Decorações Reais", priceRange: "R$ 15.000 - 30.000", rating: 5.0, availability: 50 }],
+            musica: [{ id: "mus1", name: "Orquestra Sinfônica", priceRange: "R$ 8.000 - 15.000", rating: 5.0, availability: 55 }],
+            espaco: [{ id: "esp1", name: "Palácio dos Eventos", priceRange: "R$ 25.000 - 50.000", rating: 5.0, availability: 45 }]
         },
-        
-        // Fornecedores para tema RÚSTICO (preço baixo-médio)
         rustico: {
-            buffet: [
-                { id: "buf1", name: "Buffet Campestre", priceRange: "R$ 45-70 por pessoa", rating: 4.5, tags: ["rustico", "caseiro", "natural"], availability: 95 },
-                { id: "buf2", name: "Sabores do Campo", priceRange: "R$ 40-60 por pessoa", rating: 4.4, tags: ["rustico", "familiar", "acolhedor"], availability: 98 }
-            ],
-            fotografia: [
-                { id: "fot1", name: "Foto Natural", priceRange: "R$ 1.800 - 3.000", rating: 4.5, tags: ["rustico", "natural", "espontaneo"], availability: 92 },
-                { id: "fot2", name: "Luz Natural Studio", priceRange: "R$ 1.500 - 2.800", rating: 4.4, tags: ["rustico", "campestre", "leve"], availability: 95 }
-            ],
-            decoracao: [
-                { id: "dec1", name: "Decoração Rústica", priceRange: "R$ 3.000 - 5.000", rating: 4.6, tags: ["rustico", "natural", "boho"], availability: 90 },
-                { id: "dec2", name: "Arte Campestre", priceRange: "R$ 2.500 - 4.500", rating: 4.5, tags: ["rustico", "artesanal", "acolhedor"], availability: 93 }
-            ],
-            musica: [
-                { id: "mus1", name: "Música ao Pé do Fogo", priceRange: "R$ 1.500 - 3.000", rating: 4.5, tags: ["rustico", "acustico", "violao"], availability: 88 },
-                { id: "mus2", name: "Banda Country", priceRange: "R$ 2.000 - 3.500", rating: 4.6, tags: ["rustico", "animado", "campestre"], availability: 85 }
-            ],
-            espaco: [
-                { id: "esp1", name: "Fazenda Paraíso", priceRange: "R$ 5.000 - 10.000", rating: 4.7, tags: ["rustico", "campo", "natureza"], availability: 85 },
-                { id: "esp2", name: "Sítio Encantado", priceRange: "R$ 4.000 - 8.000", rating: 4.5, tags: ["rustico", "familiar", "acolhedor"], availability: 90 }
-            ]
+            buffet: [{ id: "buf1", name: "Buffet Campestre", priceRange: "R$ 45-70 por pessoa", rating: 4.5, availability: 95 }],
+            fotografia: [{ id: "fot1", name: "Foto Natural", priceRange: "R$ 1.800 - 3.000", rating: 4.5, availability: 92 }],
+            decoracao: [{ id: "dec1", name: "Decoração Rústica", priceRange: "R$ 3.000 - 5.000", rating: 4.6, availability: 90 }],
+            musica: [{ id: "mus1", name: "Música ao Pé do Fogo", priceRange: "R$ 1.500 - 3.000", rating: 4.5, availability: 88 }],
+            espaco: [{ id: "esp1", name: "Fazenda Paraíso", priceRange: "R$ 5.000 - 10.000", rating: 4.7, availability: 85 }]
         },
-        
-        // Fornecedores para tema MODERNO (preço médio-alto)
         moderno: {
-            buffet: [
-                { id: "buf1", name: "Buffet Contemporâneo", priceRange: "R$ 90-140 por pessoa", rating: 4.8, tags: ["moderno", "fusion", "criativo"], availability: 85 },
-                { id: "buf2", name: "Chef Molecular", priceRange: "R$ 100-160 por pessoa", rating: 4.9, tags: ["moderno", "inovador", "experimental"], availability: 75 }
-            ],
-            fotografia: [
-                { id: "fot1", name: "Urban Photo", priceRange: "R$ 3.500 - 6.000", rating: 4.8, tags: ["moderno", "urbano", "criativo"], availability: 80 },
-                { id: "fot2", name: "Estudio Contemporâneo", priceRange: "R$ 4.000 - 7.000", rating: 4.7, tags: ["moderno", "design", "arrojado"], availability: 75 }
-            ],
-            decoracao: [
-                { id: "dec1", name: "Design Minimalista", priceRange: "R$ 6.000 - 12.000", rating: 4.8, tags: ["moderno", "minimalista", "design"], availability: 78 },
-                { id: "dec2", name: "Arte Geométrica", priceRange: "R$ 5.000 - 10.000", rating: 4.7, tags: ["moderno", "geometrico", "colorido"], availability: 82 }
-            ],
-            musica: [
-                { id: "mus1", name: "DJ Eletrônico", priceRange: "R$ 3.000 - 6.000", rating: 4.7, tags: ["moderno", "eletronico", "pista"], availability: 80 },
-                { id: "mus2", name: "Banda Indie", priceRange: "R$ 3.500 - 6.500", rating: 4.8, tags: ["moderno", "alternativo", "descolado"], availability: 75 }
-            ],
-            espaco: [
-                { id: "esp1", name: "Galeria Industrial", priceRange: "R$ 10.000 - 18.000", rating: 4.8, tags: ["moderno", "industrial", "design"], availability: 70 },
-                { id: "esp2", name: "Rooftop Vista", priceRange: "R$ 12.000 - 22.000", rating: 4.7, tags: ["moderno", "vista", "urbano"], availability: 65 }
-            ]
+            buffet: [{ id: "buf1", name: "Buffet Contemporâneo", priceRange: "R$ 90-140 por pessoa", rating: 4.8, availability: 85 }],
+            fotografia: [{ id: "fot1", name: "Urban Photo", priceRange: "R$ 3.500 - 6.000", rating: 4.8, availability: 80 }],
+            decoracao: [{ id: "dec1", name: "Design Minimalista", priceRange: "R$ 6.000 - 12.000", rating: 4.8, availability: 78 }],
+            musica: [{ id: "mus1", name: "DJ Eletrônico", priceRange: "R$ 3.000 - 6.000", rating: 4.7, availability: 80 }],
+            espaco: [{ id: "esp1", name: "Galeria Industrial", priceRange: "R$ 10.000 - 18.000", rating: 4.8, availability: 70 }]
         }
     };
     
-    // Perfil de preço do tema
     var priceProfile = themePriceProfile[eventTheme?.toLowerCase()] || themePriceProfile.classico;
-    
-    // Selecionar fornecedores baseado no tema
     var themeSuppliers = SUPPLIERS_BY_THEME[eventTheme?.toLowerCase()] || SUPPLIERS_BY_THEME.classico;
     
-    // Para cada categoria
     for (var category in themeSuppliers) {
         if (themeSuppliers.hasOwnProperty(category)) {
             var suppliers = themeSuppliers[category];
-            
             for (var j = 0; j < suppliers.length; j++) {
                 var supplier = suppliers[j];
-                var score = 0;
-                
-                // 1. Compatibilidade de tema (peso 40%)
-                score += 30;
-                
-                // 2. Rating (peso 30%)
+                var score = 30;
                 var ratingScore = (supplier.rating - 4) * 20;
                 score += Math.max(0, ratingScore);
                 
-                // 3. Compatibilidade de orçamento (peso 30%)
                 if (budget > 0) {
                     var priceValue = parsePriceRange(supplier.priceRange);
                     var orcamentoAjustado = budget * priceProfile.multiplicador;
                     var budgetRatio = priceValue / orcamentoAjustado;
-                    
-                    if (budgetRatio <= 0.5) {
-                        score += 30;
-                    } else if (budgetRatio <= 0.8) {
-                        score += 25;
-                    } else if (budgetRatio <= 1.2) {
-                        score += 20;
-                    } else if (budgetRatio <= 1.5) {
-                        score += 10;
-                    } else {
-                        score += 5;
-                    }
+                    if (budgetRatio <= 0.5) score += 30;
+                    else if (budgetRatio <= 0.8) score += 25;
+                    else if (budgetRatio <= 1.2) score += 20;
+                    else if (budgetRatio <= 1.5) score += 10;
+                    else score += 5;
                 }
                 
-                // 4. Disponibilidade
                 score += (supplier.availability / 100) * 15;
-                
                 var compatibility = Math.min(100, Math.max(0, Math.round(score)));
                 
-                // Definir ícone baseado na categoria
                 var icon = "";
                 if (category === "buffet") icon = "🍽️";
                 else if (category === "fotografia") icon = "📷";
@@ -495,64 +424,35 @@ export function suggestSuppliersIA(eventTheme, budget) {
                     category: category,
                     priceRange: supplier.priceRange,
                     rating: supplier.rating,
-                    tags: supplier.tags,
                     availability: supplier.availability,
                     compatibility: compatibility,
-                    icon: icon,
-                    themeProfile: priceProfile.nivel,
-                    themeDescription: priceProfile.descricao
+                    icon: icon
                 });
             }
         }
     }
     
-    // Ordenar por compatibilidade
-    suggestions.sort(function(a, b) {
-        return b.compatibility - a.compatibility;
-    });
-    
+    suggestions.sort(function(a, b) { return b.compatibility - a.compatibility; });
     return suggestions;
 }
 
-// Função auxiliar para extrair números do preço
-function parsePriceRange(priceRange) {
-    if (!priceRange) return 5000;
-    var numbers = priceRange.match(/\d+/g);
-    if (!numbers || numbers.length === 0) return 5000;
-    var sum = 0;
-    for (var i = 0; i < numbers.length; i++) {
-        sum = sum + parseInt(numbers[i], 10);
-    }
-    return sum / numbers.length;
-}
 // ============================================
-// SALVAR FORNECEDORES SUGERIDOS
-// ============================================
-// ============================================
-// SALVAR FORNECEDORES SUGERIDOS - CORRIGIDO
+// FORNECEDORES SALVOS
 // ============================================
 
 export async function saveSuggestedSupplier(userId, eventId, supplierData) {
     try {
-        // Garantir que userId está correto
         if (!userId || !eventId) {
-            console.error("userId ou eventId faltando:", { userId, eventId });
             return { success: false, error: "Dados incompletos" };
         }
         
-        // Verificar se já existe
-        const q = query(
-            collection(db, "saved_suppliers"), 
-            where("event_id", "==", eventId),
-            where("supplier_id", "==", supplierData.id)
-        );
+        const q = query(collection(db, "saved_suppliers"), where("event_id", "==", eventId), where("supplier_id", "==", supplierData.id));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
             return { success: false, error: "Fornecedor já salvo nesta lista" };
         }
         
-        // Criar o documento com todos os campos necessários
         const newSupplier = {
             user_id: userId,
             event_id: eventId,
@@ -565,14 +465,36 @@ export async function saveSuggestedSupplier(userId, eventId, supplierData) {
             saved_at: new Date().toISOString()
         };
         
-        console.log("Salvando fornecedor:", newSupplier);
-        
         const docRef = await addDoc(collection(db, "saved_suppliers"), newSupplier);
-        
-        console.log("Fornecedor salvo com ID:", docRef.id);
         return { success: true, id: docRef.id };
     } catch (error) {
-        console.error("Erro detalhado ao salvar fornecedor:", error);
+        console.error("Erro ao salvar fornecedor:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+export async function getSavedSuppliers(eventId) {
+    try {
+        if (!eventId) return [];
+        const q = query(collection(db, "saved_suppliers"), where("event_id", "==", eventId));
+        const querySnapshot = await getDocs(q);
+        const suppliers = [];
+        querySnapshot.forEach((doc) => {
+            suppliers.push({ id: doc.id, ...doc.data() });
+        });
+        return suppliers;
+    } catch (error) {
+        console.error("Erro ao buscar fornecedores salvos:", error);
+        return [];
+    }
+}
+
+export async function deleteSavedSupplier(supplierId) {
+    try {
+        await deleteDoc(doc(db, "saved_suppliers", supplierId));
+        return { success: true };
+    } catch (error) {
+        console.error("Erro ao deletar fornecedor salvo:", error);
         return { success: false, error: error.message };
     }
 }
@@ -590,6 +512,7 @@ export async function createEvent(eventData, userId) {
             theme: eventData.theme || "Classico",
             budget_total: eventData.budget_total || 0,
             event_date: eventData.event_date || null,
+            event_time: eventData.event_time || null,
             venue: eventData.venue || "",
             user_id: userId,
             created_at: new Date().toISOString()
@@ -597,6 +520,7 @@ export async function createEvent(eventData, userId) {
         await createDefaultTasksForEvent(userId, docRef.id);
         return { success: true, id: docRef.id };
     } catch (error) {
+        console.error("Erro ao criar evento:", error);
         return { success: false, error: error.message };
     }
 }
@@ -611,6 +535,7 @@ export async function getUserEvents(userId) {
         });
         return events;
     } catch (error) {
+        console.error("Erro ao buscar eventos:", error);
         return [];
     }
 }
@@ -618,9 +543,19 @@ export async function getUserEvents(userId) {
 export async function updateEvent(eventId, data) {
     try {
         var eventRef = doc(db, "events", eventId);
-        await updateDoc(eventRef, data);
+        await updateDoc(eventRef, {
+            name: data.name,
+            couple_names: data.couple_names,
+            event_type: data.event_type,
+            theme: data.theme,
+            budget_total: data.budget_total,
+            event_date: data.event_date || null,
+            event_time: data.event_time || null,
+            venue: data.venue
+        });
         return { success: true };
     } catch (error) {
+        console.error("Erro ao atualizar evento:", error);
         return { success: false, error: error.message };
     }
 }
@@ -630,6 +565,7 @@ export async function deleteEvent(eventId) {
         await deleteDoc(doc(db, "events", eventId));
         return { success: true };
     } catch (error) {
+        console.error("Erro ao deletar evento:", error);
         return { success: false, error: error.message };
     }
 }
@@ -651,6 +587,7 @@ export async function createGuest(guestData, eventId) {
         });
         return { success: true, id: docRef.id };
     } catch (error) {
+        console.error("Erro ao criar convidado:", error);
         return { success: false, error: error.message };
     }
 }
@@ -665,6 +602,7 @@ export async function getEventGuests(eventId) {
         });
         return guests;
     } catch (error) {
+        console.error("Erro ao buscar convidados:", error);
         return [];
     }
 }
@@ -675,6 +613,7 @@ export async function updateGuest(guestId, data) {
         await updateDoc(guestRef, data);
         return { success: true };
     } catch (error) {
+        console.error("Erro ao atualizar convidado:", error);
         return { success: false, error: error.message };
     }
 }
@@ -684,6 +623,7 @@ export async function deleteGuest(guestId) {
         await deleteDoc(doc(db, "guests", guestId));
         return { success: true };
     } catch (error) {
+        console.error("Erro ao deletar convidado:", error);
         return { success: false, error: error.message };
     }
 }
@@ -705,6 +645,7 @@ export async function createSupplier(supplierData, eventId) {
         });
         return { success: true, id: docRef.id };
     } catch (error) {
+        console.error("Erro ao criar fornecedor:", error);
         return { success: false, error: error.message };
     }
 }
@@ -719,6 +660,7 @@ export async function getEventSuppliers(eventId) {
         });
         return suppliers;
     } catch (error) {
+        console.error("Erro ao buscar fornecedores:", error);
         return [];
     }
 }
@@ -729,6 +671,7 @@ export async function updateSupplier(supplierId, data) {
         await updateDoc(supplierRef, data);
         return { success: true };
     } catch (error) {
+        console.error("Erro ao atualizar fornecedor:", error);
         return { success: false, error: error.message };
     }
 }
@@ -738,6 +681,7 @@ export async function deleteSupplier(supplierId) {
         await deleteDoc(doc(db, "suppliers", supplierId));
         return { success: true };
     } catch (error) {
+        console.error("Erro ao deletar fornecedor:", error);
         return { success: false, error: error.message };
     }
 }
@@ -760,6 +704,7 @@ export async function createTask(taskData, userId, eventId = null) {
         });
         return { success: true, id: docRef.id };
     } catch (error) {
+        console.error("Erro ao criar tarefa:", error);
         return { success: false, error: error.message };
     }
 }
@@ -779,6 +724,7 @@ export async function getUserTasks(userId, eventId = null) {
         });
         return tasks;
     } catch (error) {
+        console.error("Erro ao buscar tarefas:", error);
         return [];
     }
 }
@@ -789,6 +735,7 @@ export async function updateTask(taskId, data) {
         await updateDoc(taskRef, data);
         return { success: true };
     } catch (error) {
+        console.error("Erro ao atualizar tarefa:", error);
         return { success: false, error: error.message };
     }
 }
@@ -798,6 +745,7 @@ export async function deleteTask(taskId) {
         await deleteDoc(doc(db, "tasks", taskId));
         return { success: true };
     } catch (error) {
+        console.error("Erro ao deletar tarefa:", error);
         return { success: false, error: error.message };
     }
 }
@@ -810,6 +758,7 @@ export async function toggleTaskComplete(taskId) {
         await updateDoc(taskRef, { completed: !currentStatus });
         return { success: true };
     } catch (error) {
+        console.error("Erro ao alternar status da tarefa:", error);
         return { success: false, error: error.message };
     }
 }
@@ -831,6 +780,7 @@ export async function updateUserProfile(userId, profileData) {
         });
         return { success: true };
     } catch (error) {
+        console.error("Erro ao atualizar perfil:", error);
         return { success: false, error: error.message };
     }
 }
@@ -841,39 +791,7 @@ export async function getUserProfile(userId) {
         if (userDoc.exists()) return userDoc.data();
         return null;
     } catch (error) {
+        console.error("Erro ao buscar perfil:", error);
         return null;
-    }
-}
-// ============================================
-// FORNECEDORES SALVOS - GET E DELETE
-// ============================================
-
-export async function getSavedSuppliers(eventId) {
-    try {
-        if (!eventId) {
-            console.error("eventId não fornecido");
-            return [];
-        }
-        
-        const q = query(collection(db, "saved_suppliers"), where("event_id", "==", eventId));
-        const querySnapshot = await getDocs(q);
-        const suppliers = [];
-        querySnapshot.forEach((doc) => {
-            suppliers.push({ id: doc.id, ...doc.data() });
-        });
-        return suppliers;
-    } catch (error) {
-        console.error("Erro ao buscar fornecedores salvos:", error);
-        return [];
-    }
-}
-
-export async function deleteSavedSupplier(supplierId) {
-    try {
-        await deleteDoc(doc(db, "saved_suppliers", supplierId));
-        return { success: true };
-    } catch (error) {
-        console.error("Erro ao deletar fornecedor salvo:", error);
-        return { success: false, error: error.message };
     }
 }
