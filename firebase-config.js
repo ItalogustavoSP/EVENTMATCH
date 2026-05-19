@@ -15,9 +15,7 @@ import {
 import { 
     getFirestore, 
     collection, doc, setDoc, getDoc, getDocs, 
-    query, where, updateDoc, deleteDoc, addDoc,
-    enableIndexedDbPersistence,
-    CACHE_SIZE_UNLIMITED
+    query, where, updateDoc, deleteDoc, addDoc
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -34,16 +32,8 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Ativar persistência offline
-enableIndexedDbPersistence(db, { cacheSizeBytes: CACHE_SIZE_UNLIMITED })
-    .then(() => console.log("🔥 Persistência offline ativada"))
-    .catch((err) => {
-        if (err.code === 'failed-precondition') {
-            console.log("⚠️ Múltiplas abas abertas, cache limitado");
-        } else if (err.code === 'unimplemented') {
-            console.log("⚠️ Navegador não suporta persistência offline");
-        }
-    });
+// Persistência offline desabilitada (evita avisos no console)
+// enableIndexedDbPersistence foi removido
 
 setPersistence(auth, browserLocalPersistence)
     .then(() => console.log("🔐 Persistência de autenticação ativada"))
@@ -219,6 +209,11 @@ export function onAuthChange(callback) {
         }
     });
 }
+
+// ============================================
+// O RESTO DO SEU CÓDIGO CONTINUA IGUAL...
+// (mantenha todo o resto do firebase-config.js igual)
+// ============================================
 
 // ============================================
 // REPOSITORIO DE FORNECEDORES (IA)

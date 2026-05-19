@@ -1491,8 +1491,12 @@ async function renderDashboard() {
     if (state.showTaskForm) modalHtml = renderTaskForm();
     
     app.innerHTML = `
-        <div class="header">
-            <div class="tabs">
+       <div class="header">
+  <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.3rem 1rem 0.3rem 0.5rem; border-radius: 60px;">
+    <img src="/assets/logo3.svg" alt="La Vie" 
+         style="height: 100px; width: 100px; border-radius: 100%; object-fit: cover;">
+    </div>
+<div class="tabs">
                 <button class="tab ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="setActiveTab('dashboard')">Dashboard</button>
                 <button class="tab ${state.activeTab === 'checklist' ? 'active' : ''}" onclick="setActiveTab('checklist')">Checklist</button>
                 <button class="tab ${state.activeTab === 'events' ? 'active' : ''}" onclick="setActiveTab('events')">Eventos</button>
@@ -1504,7 +1508,9 @@ async function renderDashboard() {
                     ${photoUrl ? `<img src="${photoUrl}" alt="Perfil">` : `<span>${state.user?.username?.charAt(0)?.toUpperCase() || 'U'}</span>`}
                 </div>
                 <span onclick="setActiveTab('profile')">${state.user?.username}</span>
-                <button class="btn-logout" onclick="event.stopPropagation(); logout()">Sair</button>
+                <button onclick="window.SAIR_DO_SISTEMA()" style="background: #e11d48; color: white; border: none; padding: 0.4rem 1rem; border-radius: 50px; cursor: pointer; font-weight: bold; margin-left: 0.5rem;">
+                    Sair
+                </button>
             </div>
         </div>
         <div class="container">
@@ -1593,6 +1599,7 @@ async function renderDashboard() {
         </div>
         ${modalHtml}
     `;
+    
     criarGraficos();
     attachFormEvents();
     if (state.selectedEvent) {

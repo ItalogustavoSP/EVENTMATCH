@@ -10,7 +10,6 @@
     <title>La Vie Casamentos - Plataforma de Eventos</title>
     
     <link rel="stylesheet" href="style.css">
-    <link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💛</text></svg>">
     
     <script type="importmap">
         {
@@ -26,32 +25,26 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
-    <!-- LOGOUT FIX - Carregar primeiro -->
-    <script src="logout-fix.js"></script>
+    <!-- FUNÇÃO DE LOGOUT GLOBAL -->
+    <script>
+        // Função de logout que funciona SEMPRE
+        function SAIR_DO_SISTEMA() {
+            console.log("🔴 SAIR_DO_SISTEMA executado!");
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/';
+            setTimeout(function() { window.location.reload(true); }, 100);
+        }
+        
+        // Expor globalmente
+        window.SAIR_AGORA = SAIR_DO_SISTEMA;
+        window.LOGOUT = SAIR_DO_SISTEMA;
+        window.logoutGlobal = SAIR_DO_SISTEMA;
+    </script>
 </head>
 <body>
     <div id="app"></div>
     
     <script type="module" src="script.js"></script>
-    
-    <!-- Botão de emergência flutuante (caso o logout não funcione) -->
-    <button id="emergencyLogoutBtn" style="position: fixed; bottom: 20px; right: 20px; background: #e11d48; color: white; border: none; border-radius: 50px; padding: 8px 16px; font-size: 12px; cursor: pointer; z-index: 9999; display: none;">
-        ⚠️ Sair Emergência
-    </button>
-    
-    <script>
-        // Mostrar botão de emergência se o logout normal falhar
-        setTimeout(() => {
-            const emergencyBtn = document.getElementById('emergencyLogoutBtn');
-            if (emergencyBtn && typeof window.forceLogout === 'function') {
-                emergencyBtn.style.display = 'block';
-                emergencyBtn.onclick = () => {
-                    if (confirm('Logout de emergência. Tem certeza?')) {
-                        window.forceLogout();
-                    }
-                };
-            }
-        }, 5000);
-    </script>
 </body>
-</html> 
+</html>
