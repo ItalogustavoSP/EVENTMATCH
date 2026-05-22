@@ -2,44 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Usuários - apenas o próprio pode ler/escrever
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Eventos - leitura autenticada, escrita apenas para o dono
-    match /events/{eventId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
-      allow update: if request.auth != null && request.auth.uid == resource.data.user_id;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.user_id;
-    }
-    
-    // Convidados - regras específicas para confirmação pública
-    match /guests/{guestId} {
-      allow read: if request.auth != null;
-      allow update: if (request.auth != null) || 
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'responded_at']));
-      allow create, delete: if request.auth != null;
-    }
-    
-    // Fornecedores do evento - apenas autenticado
-    match /suppliers/{supplierId} {
+    // TEMPORÁRIO - Modo de desenvolvimento
+    match /{document=**} {
       allow read, write: if request.auth != null;
-    }
-    
-    // Tarefas - apenas o dono
-    match /tasks/{taskId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.user_id;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
-    }
-    
-    // Fornecedores salvos - apenas o dono
-    match /saved_suppliers/{savedId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.user_id;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.user_id;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.user_id;
-      allow update: if false;
     }
   }
 }

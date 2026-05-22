@@ -5,7 +5,8 @@ const urlsToCache = [
   '/style.css',
   '/script.js',
   '/firebase-config.js',
-  '/confirmar.html',
+  '/confirmar-presenca.html',
+  '/manifest.json',
   'https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'
@@ -19,31 +20,42 @@ self.addEventListener('install', event => {
         console.log('Cache aberto');
         return cache.addAll(urlsToCache);
       })
+      .catch(err => console.log('Erro ao adicionar ao cache:', err))
   );
 });
 
 // Interceptação de requisições
 self.addEventListener('fetch', event => {
+  // IGNORAR requisições POST, PUT, DELETE
+  if (event.request.method !== 'GET') {
+    return fetch(event.request);
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Cache first, then network
         if (response) {
           return response;
         }
-        return fetch(event.request).then(
-          networkResponse => {
-            // Não armazenar em cache requisições de API
-            if (!event.request.url.includes('/firestore') && 
-                !event.request.url.includes('/auth')) {
-              return caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, networkResponse.clone());
-                return networkResponse;
-              });
-            }
-            return networkResponse;
+        return fetch(event.request).then(networkResponse => {
+          // Não armazenar em cache requisições de API
+          if (!event.request.url.includes('/firestore') && 
+              !event.request.url.includes('/auth') &&
+              !event.request.url.includes('googleapis')) {
+            return caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, networkResponse.clone());
+              return networkResponse;
+            });
           }
-        );
+          return networkResponse;
+        });
+      })
+      .catch(() => {
+        // Fallback offline - página 404
+        if (event.request.url.includes('.html')) {
+          return caches.match('/404.html');
+        }
+        return new Response('Offline - Verifique sua conexão', { status: 503 });
       })
   );
 });
@@ -67,14 +79,10 @@ self.addEventListener('activate', event => {
 // Notificações push (opcional)
 self.addEventListener('push', event => {
   const options = {
-    body: event.data.text(),
-    icon: 'assets/icon-192.png',
-    badge: 'assets/icon-72.png',
-    vibrate: [200, 100, 200],
-    actions: [
-      { action: 'ver', title: 'Ver agora' },
-      { action: 'fechar', title: 'Fechar' }
-    ]
+    body: event.data?.text() || 'Nova atualização no La Vie Casamentos',
+    icon: '/assets/icon-192.png',
+    badge: '/assets/icon-72.png',
+    vibrate: [200, 100, 200]
   };
   
   event.waitUntil(
@@ -84,10 +92,7 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  
-  if (event.action === 'ver') {
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
+  event.waitUntil(
+    clients.openWindow('/')
+  );
 });

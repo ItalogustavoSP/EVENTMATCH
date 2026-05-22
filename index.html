@@ -5,11 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <meta name="theme-color" content="#ffd700">
     <meta name="description" content="La Vie Casamentos - Plataforma completa para planejamento de casamentos">
+    
+    <!-- Meta tags para SEO e compartilhamento -->
+    <meta property="og:title" content="La Vie Casamentos">
+    <meta property="og:description" content="Plataforma completa para planejamento de casamentos">
+    <meta property="og:image" content="/assets/logo3.svg">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    
+    <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="assets/icon-192.png">
+    
     <title>La Vie Casamentos - Plataforma de Eventos</title>
     
+    <!-- Preload de recursos -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="/assets/logo3.svg">
+    <link rel="shortcut icon" href="/assets/logo3.svg">
     
     <script type="importmap">
         {
@@ -24,10 +39,28 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div id="app"></div>
+    <div id="offlineToast" style="display: none; position: fixed; bottom: 20px; right: 20px; background: #e11d48; color: white; padding: 0.5rem 1rem; border-radius: 50px; z-index: 10000; font-size: 0.8rem;">
+        ⚠️ Você está offline. Verifique sua conexão.
+    </div>
     
-    <!-- FUNÇÃO DE LOGOUT GLOBAL -->
     <script>
-        // Função de logout que funciona SEMPRE
+        // ============================================
+        // FUNÇÕES AUXILIARES GLOBAIS
+        // ============================================
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        window.escapeHtml = escapeHtml;
+        
+        // Logout global de emergência
         function SAIR_DO_SISTEMA() {
             console.log("🔴 SAIR_DO_SISTEMA executado!");
             localStorage.clear();
@@ -36,15 +69,80 @@
             setTimeout(function() { window.location.reload(true); }, 100);
         }
         
-        // Expor globalmente
         window.SAIR_AGORA = SAIR_DO_SISTEMA;
         window.LOGOUT = SAIR_DO_SISTEMA;
         window.logoutGlobal = SAIR_DO_SISTEMA;
+        
+        // QR Code - versão que dispara evento para o módulo principal
+        window.showQRCodeModal = function(guestId, guestName) {
+    // Tentar pegar do state do módulo principal
+    let selectedEvent = null;
+    
+    // Tentar via evento (melhor método)
+    const getEventEvent = new CustomEvent('getSelectedEvent', { 
+        detail: { callback: (eventId) => { selectedEvent = eventId; } }
+    });
+    window.dispatchEvent(getEventEvent);
+    
+    // Fallback: localStorage
+    if (!selectedEvent) {
+        const savedState = localStorage.getItem('appState');
+        if (savedState) {
+            try {
+                const state = JSON.parse(savedState);
+                selectedEvent = state.selectedEvent;
+            } catch(e) {}
+        }
+    }
+    
+    if (!selectedEvent) {
+        alert('❌ Erro: Evento não identificado. Selecione um evento primeiro no sistema.');
+        return;
+    }
+    
+    const baseUrl = window.location.origin;
+    // CORREÇÃO: Adicionar status=confirmado no QR Code para confirmação direta
+    const confirmLink = `${baseUrl}/confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=confirmado`;
+    const declineLink = `${baseUrl}/confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=recusado`;
+    const maybeLink = `${baseUrl}/confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=talvez`;
+    
+    // ... resto do modal igual
+};
+        
+        // Detecção de conexão
+        window.addEventListener('online', () => {
+            const toast = document.getElementById('offlineToast');
+            if (toast) toast.style.display = 'none';
+            console.log('🟢 Conexão restaurada');
+        });
+        
+        window.addEventListener('offline', () => {
+            const toast = document.getElementById('offlineToast');
+            if (toast) toast.style.display = 'block';
+            console.log('🔴 Conexão perdida');
+        });
+        
+        console.log("✅ Scripts globais carregados com sucesso!");
     </script>
-</head>
-<body>
-    <div id="app"></div>
     
     <script type="module" src="script.js"></script>
+    
+    <!-- Fallback para erro no script principal -->
+    <script>
+        setTimeout(() => {
+            const app = document.getElementById('app');
+            if (app && app.innerHTML.trim() === '') {
+                app.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, #0f0f1a, #1a1a2e); color: white; text-align: center; padding: 2rem;">
+                        <div>
+                            <h1 style="color: #ffd700;">LA VIE</h1>
+                            <p style="margin: 1rem 0;">Erro ao carregar o sistema.</p>
+                            <button onclick="location.reload()" style="background: #ffd700; border: none; padding: 0.75rem 1.5rem; border-radius: 50px; cursor: pointer; font-weight: bold;">Recarregar Página</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }, 5000);
+    </script>
 </body>
 </html>

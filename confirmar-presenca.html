@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="description" content="Confirme sua presença no evento - La Vie Casamentos">
+    <title>Confirmar Presença - La Vie Casamentos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/svg+xml" href="/assets/logo3.svg">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .container {
+            max-width: 550px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            animation: fadeInUp 0.5s ease;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logo { text-align: center; margin-bottom: 1.5rem; }
+        .logo h1 {
+            font-size: 2rem;
+            letter-spacing: 6px;
+            background: linear-gradient(135deg, #ffd700, #ffb347);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .logo .subtitle {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            color: #ffd700;
+            text-transform: uppercase;
+        }
+        .event-info {
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 20px;
+            padding: 1.2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border-left: 4px solid #ffd700;
+        }
+        .event-info h2 { color: #ffd700; font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .event-info p { color: #ccc; font-size: 0.85rem; margin: 0.25rem 0; }
+        .guest-name {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 60px;
+            color: #ffd700;
+        }
+        .buttons {
+            display: flex;
+            gap: 0.8rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        .btn {
+            flex: 1;
+            padding: 0.9rem;
+            border: none;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+        .btn-confirm { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .btn-confirm:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); }
+        .btn-decline { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .btn-decline:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3); }
+        .btn-maybe { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .btn-maybe:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3); }
+        .btn-secondary { background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); margin-top: 1rem; }
+        .loader { text-align: center; margin: 1rem 0; }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 215, 0, 0.2);
+            border-top: 3px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .success-message, .error-message { text-align: center; padding: 2rem; }
+        .success-message .icon { font-size: 4rem; margin-bottom: 1rem; }
+        .success-message h3 { color: #10b981; margin-bottom: 0.5rem; font-size: 1.3rem; }
+        .error-message h3 { color: #ef4444; margin-bottom: 0.5rem; font-size: 1.3rem; }
+        .success-message p, .error-message p { color: #ccc; margin-bottom: 1.5rem; }
+        .extra-info {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 215, 0, 0.2);
+            font-size: 0.7rem;
+            color: #888;
+            text-align: center;
+        }
+        @media (max-width: 480px) {
+            .container { padding: 1rem; }
+            .card { padding: 1.5rem; }
+            .buttons { flex-direction: column; }
+            .btn { padding: 0.8rem; }
+            .guest-name { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="content"></div>
+    </div>
+
+    <!-- ✅ FIREBASE SDK - Ordem correta -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Aguardar o Firebase carregar completamente
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("📄 DOM carregado, iniciando...");
+            
+            // Verificar se o Firebase está disponível
+            if (typeof firebase === 'undefined') {
+                console.error("❌ Firebase não carregado!");
+                document.getElementById('content').innerHTML = `
+                    <div class="card">
+                        <div class="error-message">
+                            <div class="icon">⚠️</div>
+                            <h3>Erro de Carregamento</h3>
+                            <p>Não foi possível carregar o sistema. Verifique sua conexão.</p>
+                            <button class="btn btn-secondary" onclick="location.reload()">Tentar novamente</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            console.log("✅ Firebase disponível!");
+            
+            // ============================================
+            // ✅ CONFIGURAÇÃO CORRETA DO FIREBASE
+            // ============================================
+            const firebaseConfig = {
+                apiKey: "AIzaSyCTg35X3QhCeQCXZR_mfvdHufzyJycDAhg",
+                authDomain: "la-vie-casamentos.firebaseapp.com",
+                projectId: "la-vie-casamentos",
+                storageBucket: "la-vie-casamentos.firebasestorage.app",
+                messagingSenderId: "44479756816",
+                appId: "1:44479756816:web:1fd88c199f3e782baae895",
+                measurementId: "G-C9RTVWLY0V"
+            };
+
+            let db = null;
+            
+            try {
+                // Inicializar Firebase se não estiver inicializado
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                    console.log("🔥 Firebase inicializado com projeto: la-vie-casamentos");
+                }
+                db = firebase.firestore();
+                // Desabilitar persistência offline para evitar erros
+                db.settings({ persistence: false });
+                console.log("✅ Firestore conectado");
+            } catch (e) {
+                console.error("❌ Erro ao inicializar Firebase:", e);
+            }
+
+            // VARIÁVEIS
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('eventId');
+            const guestId = urlParams.get('guestId');
+            const predefinedStatus = urlParams.get('status');
+            const content = document.getElementById('content');
+
+            let eventData = null;
+            let guestData = null;
+
+            // FUNÇÕES AUXILIARES
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function formatDate(dateStr) {
+                if (!dateStr) return 'Data a definir';
+                try {
+                    const date = new Date(dateStr);
+                    return date.toLocaleDateString('pt-BR', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                } catch(e) {
+                    return dateStr;
+                }
+            }
+
+            function formatTime(timeStr) {
+                if (!timeStr) return '';
+                return timeStr.substring(0, 5);
+            }
+
+            function showLoader() {
+                content.innerHTML = `
+                    <div class="card">
+                        <div class="loader">
+                            <div class="spinner"></div>
+                            <p style="margin-top: 1rem; color: #ffd700;">Carregando informações do evento...</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function showSuccess(status, guestName) {
+                const icons = { 'confirmado': '✅', 'recusado': '❌', 'talvez': '🤔' };
+                const titles = { 'confirmado': 'Presença Confirmada!', 'recusado': 'Presença Recusada', 'talvez': 'Resposta Registrada' };
+                const colors = { 'confirmado': '#10b981', 'recusado': '#ef4444', 'talvez': '#f59e0b' };
+                
+                content.innerHTML = `
+                    <div class="card">
+                        <div class="success-message">
+                            <div class="icon">${icons[status] || '✅'}</div>
+                            <h3 style="color: ${colors[status]};">${titles[status]}</h3>
+                            <p>Obrigado <strong>${escapeHtml(guestName)}</strong>! Sua resposta foi registrada com sucesso.</p>
+                            <button class="btn btn-secondary" onclick="window.location.href='/'">Voltar para página inicial</button>
+                        </div>
+                        <div class="extra-info">
+                            <p>💛 La Vie Casamentos - Seu sonho, nossa missão</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function showError(message) {
+                content.innerHTML = `
+                    <div class="card">
+                        <div class="error-message">
+                            <div class="icon">⚠️</div>
+                            <h3>Ops! Algo deu errado</h3>
+                            <p>${escapeHtml(message)}</p>
+                            <button class="btn btn-secondary" onclick="location.reload()">Tentar novamente</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderConfirmationForm() {
+                const eventDate = eventData.event_date ? formatDate(eventData.event_date) : 'Data a definir';
+                const eventTime = eventData.event_time ? ` às ${formatTime(eventData.event_time)}` : '';
+                const eventName = eventData.name || eventData.couple_names || 'Evento';
+                
+                content.innerHTML = `
+                    <div class="card">
+                        <div class="logo">
+                            <h1>LA VIE</h1>
+                            <div class="subtitle">CASAMENTOS</div>
+                        </div>
+                        
+                        <div class="event-info">
+                            <h2>${escapeHtml(eventName)}</h2>
+                            <p><i class="fas fa-calendar-alt"></i> ${eventDate}${eventTime}</p>
+                            <p><i class="fas fa-map-marker-alt"></i> ${escapeHtml(eventData.venue || 'Local a confirmar')}</p>
+                        </div>
+                        
+                        <div class="guest-name">
+                            ✨ ${escapeHtml(guestData.name || 'Convidado')} ✨
+                        </div>
+                        
+                        <div class="buttons">
+                            <button class="btn btn-confirm" onclick="window.submitConfirmation('confirmado')">
+                                <i class="fas fa-check-circle"></i> Sim, vou comparecer
+                            </button>
+                            <button class="btn btn-maybe" onclick="window.submitConfirmation('talvez')">
+                                <i class="fas fa-question-circle"></i> Talvez, depois confirmo
+                            </button>
+                            <button class="btn btn-decline" onclick="window.submitConfirmation('recusado')">
+                                <i class="fas fa-times-circle"></i> Não poderei comparecer
+                            </button>
+                        </div>
+                        
+                        <div class="extra-info">
+                            <p><i class="fas fa-lock"></i> Suas informações são seguras.</p>
+                            <p>💛 Sua resposta é muito importante para o planejamento.</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // ============================================
+            // FUNÇÃO DE CONFIRMAÇÃO
+            // ============================================
+            window.submitConfirmation = async function(status) {
+                console.log("📝 Status recebido:", status);
+                
+                if (!status || !['confirmado', 'recusado', 'talvez'].includes(status)) {
+                    showError("Status inválido.");
+                    return;
+                }
+                
+                showLoader();
+                
+                if (!db || !eventId || !guestId) {
+                    showError("Erro ao conectar com o servidor. Tente novamente.");
+                    return;
+                }
+                
+                try {
+                    const now = new Date().toISOString();
+                    const guestRef = db.collection('events').doc(eventId).collection('guests').doc(guestId);
+                    const guestDoc = await guestRef.get();
+                    
+                    if (guestDoc.exists) {
+                        await guestRef.update({
+                            status: status,
+                            responded_at: now,
+                            user_agent: navigator.userAgent
+                        });
+                        console.log("✅ Status atualizado:", status);
+                    } else {
+                        await guestRef.set({
+                            name: guestData?.name || 'Convidado',
+                            status: status,
+                            responded_at: now,
+                            created_at: now,
+                            user_agent: navigator.userAgent,
+                            event_id: eventId
+                        });
+                        console.log("✅ Convidado criado com status:", status);
+                    }
+                    
+                    localStorage.setItem(`confirmacao_${eventId}_${guestId}`, JSON.stringify({
+                        status: status,
+                        timestamp: now,
+                        guestName: guestData?.name || 'Convidado'
+                    }));
+                    
+                    showSuccess(status, guestData?.name || 'Convidado');
+                    
+                } catch (error) {
+                    console.error("❌ Erro ao salvar:", error);
+                    showError("Erro ao processar sua confirmação. Tente novamente.");
+                }
+            };
+
+            // CARREGAR DADOS
+            async function loadData() {
+                if (!eventId || !guestId) {
+                    showError('Link inválido. Verifique o endereço.');
+                    return;
+                }
+                
+                console.log("🔄 Carregando evento:", eventId);
+                
+                const localConfirm = localStorage.getItem(`confirmacao_${eventId}_${guestId}`);
+                if (localConfirm) {
+                    try {
+                        const data = JSON.parse(localConfirm);
+                        if (data && data.status) {
+                            showSuccess(data.status, data.guestName || 'Convidado');
+                            return;
+                        }
+                    } catch(e) {}
+                }
+                
+                showLoader();
+                
+                if (!db) {
+                    showError("Erro de conexão. Verifique sua internet.");
+                    return;
+                }
+                
+                try {
+                    const eventDoc = await db.collection('events').doc(eventId).get();
+                    
+                    if (!eventDoc.exists) {
+                        showError('Evento não encontrado.');
+                        return;
+                    }
+                    
+                    eventData = eventDoc.data();
+                    console.log("✅ Evento encontrado");
+                    
+                    const guestDoc = await db.collection('events').doc(eventId).collection('guests').doc(guestId).get();
+                    
+                    if (guestDoc.exists) {
+                        guestData = guestDoc.data();
+                        if (guestData.status && guestData.status !== 'pendente') {
+                            showSuccess(guestData.status, guestData.name);
+                            return;
+                        }
+                    } else {
+                        guestData = { name: 'Convidado' };
+                    }
+                    
+                    if (predefinedStatus && ['confirmado', 'recusado', 'talvez'].includes(predefinedStatus)) {
+                        window.submitConfirmation(predefinedStatus);
+                        return;
+                    }
+                    
+                    renderConfirmationForm();
+                    
+                } catch (error) {
+                    console.error("❌ Erro:", error);
+                    showError('Erro ao carregar os dados. Tente novamente.');
+                }
+            }
+            
+            // Iniciar
+            loadData();
+        });
+    </script>
+</body>
+</html>
