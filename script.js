@@ -123,7 +123,7 @@ function showNotification(message, type) {
     }, 3000);
     
     if (type === 'warning' && Notification.permission === 'granted') {
-        new Notification('La Vie Casamentos', { body: message, icon: '/assets/icon-192.png' });
+        new Notification('La Vie Casamentos', { body: message, icon: './assets/icon-192.png' });
     }
 }
 
@@ -798,9 +798,9 @@ function startCountdownTimer() {
 
 function showQRCodeModal(guestId, guestName) {
     const baseUrl = window.location.origin;
-    const confirmLink = `${baseUrl}/confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}`;
-    const declineLink = `${baseUrl}/confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}&status=recusado`;
-    const maybeLink = `${baseUrl}/confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}&status=talvez`;
+    const confirmLink = `${baseUrl}./confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}`;
+    const declineLink = `${baseUrl}./confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}&status=recusado`;
+    const maybeLink = `${baseUrl}./confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}&status=talvez`;
     
     console.log("🔗 Links gerados:", { confirmLink, declineLink, maybeLink }); // Para debug
     
@@ -895,8 +895,8 @@ window.sendWhatsAppInvite = async function(guestId, guestName, guestPhone) {
     const eventVenue = currentEvent?.venue || 'Local a confirmar';
     
     const baseUrl = window.location.origin;
-    const confirmLink = `${baseUrl}/confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}`;
-    const declineLink = `${baseUrl}/confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}&status=recusado`;
+    const confirmLink = `${baseUrl}./confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}`;
+    const declineLink = `${baseUrl}./confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}&status=recusado`;
     
     let phoneNumber = guestPhone.replace(/\D/g, '');
     if (phoneNumber.length === 11) phoneNumber = '55' + phoneNumber;
@@ -932,7 +932,7 @@ window.sendEmailInvite = async function(guestId, guestName, guestEmail) {
         return;
     }
     
-    const confirmLink = `${window.location.origin}/confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}`;
+    const confirmLink = `${window.location.origin}./confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}`;
     
     // Copiar link para área de transferência (já que EmailJS não está configurado)
     await navigator.clipboard.writeText(confirmLink);
@@ -2260,7 +2260,7 @@ async function renderDashboard() {
     app.innerHTML = `
         <div class="header">
             <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.3rem 1rem 0.3rem 0.5rem; border-radius: 60px;">
-                <img src="/assets/logo3.svg" alt="La Vie" style="height: 100px; width: 100px; border-radius: 100%; object-fit: cover;">
+                <img src="./assets/logo3.svg" alt="La Vie" style="height: 100px; width: 100px; border-radius: 100%; object-fit: cover;">
             </div>
             <div class="tabs">
                 <button class="tab ${state.activeTab === 'dashboard' ? 'active' : ''}" onclick="setActiveTab('dashboard')">Dashboard</button>
@@ -2497,7 +2497,7 @@ function loadSavedTheme() {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('./sw.js')
             .then(registration => console.log('✅ Service Worker registrado:', registration.scope))
             .catch(error => console.log('❌ Falha ao registrar Service Worker:', error));
     });
