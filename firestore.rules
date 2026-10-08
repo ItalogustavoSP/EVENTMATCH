@@ -1,10 +1,29 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // TEMPORÁRIO - Modo de desenvolvimento
+
+    // Usuários autenticados podem trabalhar normalmente com os dados do sistema.
     match /{document=**} {
       allow read, write: if request.auth != null;
+    }
+
+    // O link de confirmação de presença funciona sem login.
+    // O ID do convidado funciona como um identificador de acesso ao RSVP.
+    match /events/{eventId} {
+      allow read: if true;
+    }
+
+    match /guests/{guestId} {
+      allow read: if true;
+
+      // O convidado sem login só pode alterar os campos necessários
+      // para registrar a resposta do RSVP.
+      allow update: if request.auth != null
+        || request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'responded_at', 'user_agent']);
+
+      allow create, delete: if request.auth != null;
     }
   }
 }
