@@ -7,7 +7,7 @@
     <title>Confirmar Presença - La Vie Casamentos</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="icon" type="image/svg+xml" href="/assets/logo3.svg">
+    <link rel="icon" type="image/svg+xml" href="./assets/logo3.svg">
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -256,7 +256,7 @@
                             <div class="icon">${icons[status] || '✅'}</div>
                             <h3 style="color: ${colors[status]};">${titles[status]}</h3>
                             <p>Obrigado <strong>${escapeHtml(guestName)}</strong>! Sua resposta foi registrada com sucesso.</p>
-                            <button class="btn btn-secondary" onclick="window.location.href='/'">Voltar para página inicial</button>
+                            <button class="btn btn-secondary" onclick="window.location.href = './index.html'">Voltar para página inicial</button>
                         </div>
                         <div class="extra-info">
                             <p>💛 La Vie Casamentos - Seu sonho, nossa missão</p>
@@ -340,7 +340,7 @@
                 
                 try {
                     const now = new Date().toISOString();
-                    const guestRef = db.collection('events').doc(eventId).collection('guests').doc(guestId);
+                    const guestRef = db.collection('guests').doc(guestId);
                     const guestDoc = await guestRef.get();
                     
                     if (guestDoc.exists) {
@@ -414,7 +414,7 @@
                     eventData = eventDoc.data();
                     console.log("✅ Evento encontrado");
                     
-                    const guestDoc = await db.collection('events').doc(eventId).collection('guests').doc(guestId).get();
+                    const guestDoc = await db.collection('guests').doc(guestId).get();
                     
                     if (guestDoc.exists) {
                         guestData = guestDoc.data();
