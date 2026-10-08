@@ -797,10 +797,10 @@ function startCountdownTimer() {
 // ============================================
 
 function showQRCodeModal(guestId, guestName) {
-    const baseUrl = window.location.origin;
-    const confirmLink = `${baseUrl}./confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}`;
-    const declineLink = `${baseUrl}./confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}&status=recusado`;
-    const maybeLink = `${baseUrl}./confirmar-presenca.html?eventId=${state.selectedEvent}&guestId=${guestId}&status=talvez`;
+    const confirmPage = new URL('./confirmar-presenca.html', window.location.href).href;
+    const confirmLink = `${confirmPage}?eventId=${state.selectedEvent}&guestId=${guestId}`;
+    const declineLink = `${confirmPage}?eventId=${state.selectedEvent}&guestId=${guestId}&status=recusado`;
+    const maybeLink = `${confirmPage}?eventId=${state.selectedEvent}&guestId=${guestId}&status=talvez`;
     
     console.log("🔗 Links gerados:", { confirmLink, declineLink, maybeLink }); // Para debug
     
