@@ -9,7 +9,7 @@
     <!-- Meta tags para SEO e compartilhamento -->
     <meta property="og:title" content="La Vie Casamentos">
     <meta property="og:description" content="Plataforma completa para planejamento de casamentos">
-    <meta property="og:image" content="/assets/logo3.svg">
+    <meta property="og:image" content="./assets/logo3.svg">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     
@@ -23,8 +23,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/svg+xml" href="/assets/logo3.svg">
-    <link rel="shortcut icon" href="/assets/logo3.svg">
+    <link rel="icon" type="image/svg+xml" href="./assets/logo3.svg">
+    <link rel="shortcut icon" href="./assets/logo3.svg">
     
     <script type="importmap">
         {
@@ -65,7 +65,7 @@
             console.log("🔴 SAIR_DO_SISTEMA executado!");
             localStorage.clear();
             sessionStorage.clear();
-            window.location.href = '/';
+            window.location.href = './index.html';
             setTimeout(function() { window.location.reload(true); }, 100);
         }
         
@@ -102,9 +102,9 @@
     
     const baseUrl = window.location.origin;
     // CORREÇÃO: Adicionar status=confirmado no QR Code para confirmação direta
-    const confirmLink = `${baseUrl}/confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=confirmado`;
-    const declineLink = `${baseUrl}/confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=recusado`;
-    const maybeLink = `${baseUrl}/confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=talvez`;
+    const confirmLink = `${baseUrl}./confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=confirmado`;
+    const declineLink = `${baseUrl}./confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=recusado`;
+    const maybeLink = `${baseUrl}./confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=talvez`;
     
     // ... resto do modal igual
 };
