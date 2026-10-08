@@ -100,11 +100,10 @@
         return;
     }
     
-    const baseUrl = window.location.origin;
-    // CORREÇÃO: Adicionar status=confirmado no QR Code para confirmação direta
-    const confirmLink = `${baseUrl}./confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=confirmado`;
-    const declineLink = `${baseUrl}./confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=recusado`;
-    const maybeLink = `${baseUrl}./confirmar-presenca.html?eventId=${selectedEvent}&guestId=${guestId}&status=talvez`;
+    const confirmPage = new URL('./confirmar-presenca.html', window.location.href).href;
+    const confirmLink = `${confirmPage}?eventId=${selectedEvent}&guestId=${guestId}&status=confirmado`;
+    const declineLink = `${confirmPage}?eventId=${selectedEvent}&guestId=${guestId}&status=recusado`;
+    const maybeLink = `${confirmPage}?eventId=${selectedEvent}&guestId=${guestId}&status=talvez`;
     
     // ... resto do modal igual
 };
